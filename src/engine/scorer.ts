@@ -22,36 +22,35 @@ export function scoreOptions(
     );
   });
 
-  return candidates
-    .map((c) => {
-      const annualizedReturn = (c.mid / c.strike) * (365 / c.dte) * 100;
-      if (annualizedReturn < filters.minAnnualizedReturn) return null;
+  const scored: ScoredOption[] = [];
 
-      const earningsWarning = daysToEarnings != null && daysToEarnings <= c.dte;
-      if (earningsWarning) return null;
+  for (const c of candidates) {
+    const annualizedReturn = (c.mid / c.strike) * (365 / c.dte) * 100;
+    if (annualizedReturn < filters.minAnnualizedReturn) continue;
 
-      const returnScore = Math.min(annualizedReturn / 80, 1);
-      const deltaScore = Math.max(1 - Math.abs(Math.abs(c.delta) - targetDeltaAbs) / 0.15, 0);
-      const ivScore = ivRank / 100;
-      const dteScore = scoreDTE(c.dte);
-      const liquidityScore = Math.min((c.openInterest / 500 + c.volume / 100) / 2, 1);
+    // Skip entirely if earnings fall within this contract's expiry window
+    if (daysToEarnings != null && daysToEarnings <= c.dte) continue;
 
-      const raw =
-        returnScore * 0.35 +
-        deltaScore * 0.25 +
-        ivScore * 0.20 +
-        dteScore * 0.10 +
-        liquidityScore * 0.10;
+    const returnScore = Math.min(annualizedReturn / 80, 1);
+    const deltaScore = Math.max(1 - Math.abs(Math.abs(c.delta) - targetDeltaAbs) / 0.15, 0);
+    const ivScore = ivRank / 100;
+    const dteScore = scoreDTE(c.dte);
+    const liquidityScore = Math.min((c.openInterest / 500 + c.volume / 100) / 2, 1);
 
-      const score = Math.round(raw * 100);
-      const signal: ScoredOption["signal"] =
-        score >= 65 && !earningsWarning ? "STRONG" :
-        score >= 40 ? "OK" : "SKIP";
+    const raw =
+      returnScore * 0.35 +
+      deltaScore * 0.25 +
+      ivScore * 0.20 +
+      dteScore * 0.10 +
+      liquidityScore * 0.10;
 
-      return { symbol, price, contract: c, ivRank, annualizedReturn, score, earningsWarning, signal };
-    })
-    .filter((c): c is ScoredOption => c !== null)
-    .sort((a, b) => b.score - a.score);
+    const score = Math.round(raw * 100);
+    const signal: ScoredOption["signal"] = score >= 65 ? "STRONG" : score >= 40 ? "OK" : "SKIP";
+
+    scored.push({ symbol, price, contract: c, ivRank, annualizedReturn, score, earningsWarning: false, signal });
+  }
+
+  return scored.sort((a, b) => b.score - a.score);
 }
 
 function scoreDTE(dte: number): number {
