@@ -1,1 +1,0 @@
-if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/put-recommender/sw.js', { scope: '/put-recommender/' })})}
