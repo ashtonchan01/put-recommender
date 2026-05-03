@@ -14,7 +14,7 @@ export function FilterBar({ filters, onChange }: Props) {
       <FilterSlider
         label="Δ Min"
         value={filters.deltaMin}
-        min={0.05} max={0.40} step={0.05}
+        min={0.05} max={0.40} step={0.025}
         format={(v) => v.toFixed(2)}
         onChange={(v) => set("deltaMin", v)}
       />
@@ -28,7 +28,7 @@ export function FilterBar({ filters, onChange }: Props) {
       <FilterSlider
         label="DTE Min"
         value={filters.dteMin}
-        min={7} max={30} step={7}
+        min={1} max={30} step={1}
         format={(v) => `${v}d`}
         onChange={(v) => set("dteMin", v)}
       />
@@ -42,7 +42,7 @@ export function FilterBar({ filters, onChange }: Props) {
       <FilterSlider
         label="Min Return"
         value={filters.minAnnualizedReturn}
-        min={5} max={60} step={5}
+        min={5} max={100} step={5}
         format={(v) => `${v}%`}
         onChange={(v) => set("minAnnualizedReturn", v)}
       />

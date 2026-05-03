@@ -54,11 +54,11 @@ export interface Filters {
 }
 
 export const DEFAULT_FILTERS: Filters = {
-  deltaMin: 0.15,
+  deltaMin: 0.05,
   deltaMax: 0.35,
-  dteMin: 14,
+  dteMin: 2,
   dteMax: 45,
-  minAnnualizedReturn: 15,
+  minAnnualizedReturn: 30,
   minMid: 0.10,
 };
 
