@@ -28,6 +28,7 @@ export function scoreOptions(
       if (annualizedReturn < filters.minAnnualizedReturn) return null;
 
       const earningsWarning = daysToEarnings != null && daysToEarnings <= c.dte;
+      if (earningsWarning) return null;
 
       const returnScore = Math.min(annualizedReturn / 80, 1);
       const deltaScore = Math.max(1 - Math.abs(Math.abs(c.delta) - targetDeltaAbs) / 0.15, 0);
