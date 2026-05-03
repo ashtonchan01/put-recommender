@@ -1,7 +1,9 @@
-import type { ScoredOption } from "../types";
+import type { ScoredOption, RiskSettings } from "../types";
+import { computeMaxContracts } from "../engine/portfolio";
 
 interface Props {
   option: ScoredOption;
+  risk: RiskSettings;
 }
 
 const signalStyle = {
@@ -21,8 +23,11 @@ const typeBadge = {
   put: "text-rose-300 bg-rose-500/15",
 };
 
-export function OptionCard({ option }: Props) {
+export function OptionCard({ option, risk }: Props) {
   const { symbol, price, contract: c, ivRank, annualizedReturn, score, earningsWarning, signal } = option;
+  const maxContracts = computeMaxContracts(c.strike, risk);
+  const collateralPerContract = c.strike * 100;
+  const monthlyEstimate = c.mid * 100 * (30 / Math.max(c.dte, 1));
 
   return (
     <div className={`rounded-xl border p-4 flex flex-col gap-3 ${signalStyle[signal]}`}>
@@ -56,6 +61,13 @@ export function OptionCard({ option }: Props) {
         <Metric label="DTE" value={String(c.dte)} />
         <Metric label="Delta" value={c.delta.toFixed(2)} />
         <Metric label="IV Rank" value={`${ivRank}%`} />
+      </div>
+
+      {/* Position sizing */}
+      <div className="grid grid-cols-3 gap-1 text-center bg-slate-900/50 rounded-lg p-2 border-t border-slate-700/40">
+        <Metric label={`Max @ ${risk.maxRiskPct}% risk`} value={`${maxContracts} contract${maxContracts !== 1 ? "s" : ""}`} />
+        <Metric label="Collateral/contract" value={`$${collateralPerContract.toLocaleString()}`} />
+        <Metric label="Est. monthly (1 ct)" value={`$${monthlyEstimate.toFixed(0)}`} />
       </div>
 
       {/* Liquidity */}

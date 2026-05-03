@@ -8,7 +8,10 @@ export function scoreOptions(
   daysToEarnings: number | null,
   filters: Filters
 ): ScoredOption[] {
-  const targetDeltaAbs = (filters.deltaMin + filters.deltaMax) / 2;
+  // Ideal delta range per risk framework: 0.20–0.30
+  const idealDeltaLow = 0.20;
+  const idealDeltaHigh = 0.30;
+  const targetDeltaAbs = (idealDeltaLow + idealDeltaHigh) / 2;
 
   const candidates = contracts.filter((c) => {
     const absDelta = Math.abs(c.delta);
@@ -32,20 +35,31 @@ export function scoreOptions(
     if (daysToEarnings != null && daysToEarnings <= c.dte) continue;
 
     const returnScore = Math.min(annualizedReturn / 80, 1);
-    const deltaScore = Math.max(1 - Math.abs(Math.abs(c.delta) - targetDeltaAbs) / 0.15, 0);
-    const ivScore = ivRank / 100;
+
+    // Reward 0.20–0.30 delta (sweet spot), penalise extremes
+    const absDelta = Math.abs(c.delta);
+    const deltaScore = absDelta >= idealDeltaLow && absDelta <= idealDeltaHigh
+      ? 1
+      : Math.max(1 - Math.abs(absDelta - targetDeltaAbs) / 0.15, 0);
+
+    // IV rank: penalise if below 30 (don't sell cheap premium)
+    const ivScore = ivRank < 20 ? 0 : ivRank < 30 ? (ivRank - 20) / 10 * 0.5 : ivRank / 100;
+
     const dteScore = scoreDTE(c.dte);
     const liquidityScore = Math.min((c.openInterest / 500 + c.volume / 100) / 2, 1);
 
     const raw =
-      returnScore * 0.35 +
+      returnScore * 0.30 +
       deltaScore * 0.25 +
-      ivScore * 0.20 +
+      ivScore * 0.25 +
       dteScore * 0.10 +
       liquidityScore * 0.10;
 
     const score = Math.round(raw * 100);
-    const signal: ScoredOption["signal"] = score >= 65 ? "STRONG" : score >= 40 ? "OK" : "SKIP";
+
+    // IV rank < 20 always SKIP — premium is too cheap
+    const signal: ScoredOption["signal"] =
+      ivRank < 20 ? "SKIP" : score >= 65 ? "STRONG" : score >= 40 ? "OK" : "SKIP";
 
     scored.push({ symbol, price, contract: c, ivRank, annualizedReturn, score, earningsWarning: false, signal });
   }

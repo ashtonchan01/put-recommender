@@ -115,6 +115,76 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // IBKR Flex Query — two-step flow
+  // Step 1: /ibkr-flex/request?t=TOKEN&q=QUERYID  → returns { referenceCode }
+  // Step 2: /ibkr-flex/statement?q=REFCODE        → returns XML statement
+  if (url.pathname === "/ibkr-flex/request") {
+    const token = url.searchParams.get("t");
+    const queryId = url.searchParams.get("q");
+    if (!token || !queryId) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Missing t or q parameter" }));
+      return;
+    }
+    try {
+      const flexUrl = `https://gdcdyn.interactivebrokers.com/Universal/servlet/FlexStatementService.SendRequest?t=${encodeURIComponent(token)}&q=${encodeURIComponent(queryId)}&v=3`;
+      const result = await httpsGet(flexUrl);
+      // Response is XML: <FlexStatementOperationInfo><Status>Success</Status><ReferenceCode>XXXXX</ReferenceCode>...
+      const refMatch = result.data.match(/<ReferenceCode>([^<]+)<\/ReferenceCode>/);
+      const statusMatch = result.data.match(/<Status>([^<]+)<\/Status>/);
+      const errMatch = result.data.match(/<ErrorMessage>([^<]+)<\/ErrorMessage>/);
+      if (errMatch) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: errMatch[1] }));
+        return;
+      }
+      if (refMatch) {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ referenceCode: refMatch[1], status: statusMatch?.[1] }));
+      } else {
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "No reference code in response", raw: result.data.substring(0, 200) }));
+      }
+    } catch (err) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: err.message }));
+    }
+    return;
+  }
+
+  if (url.pathname === "/ibkr-flex/statement") {
+    const refCode = url.searchParams.get("q");
+    if (!refCode) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Missing q parameter" }));
+      return;
+    }
+    try {
+      const flexUrl = `https://gdcdyn.interactivebrokers.com/Universal/servlet/FlexStatementService.GetStatement?q=${encodeURIComponent(refCode)}&v=3`;
+      const result = await httpsGet(flexUrl);
+      res.writeHead(result.statusCode, { "Content-Type": "text/xml" });
+      res.end(result.data);
+    } catch (err) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: err.message }));
+    }
+    return;
+  }
+
+  // v10 Yahoo Finance (quoteSummary for earnings)
+  if (url.pathname.startsWith("/v10/")) {
+    try {
+      const yahooPath = url.pathname + url.search;
+      const result = await proxyRequest(yahooPath);
+      res.writeHead(result.statusCode, { "Content-Type": "application/json" });
+      res.end(result.data);
+    } catch (err) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: err.message }));
+    }
+    return;
+  }
+
   res.writeHead(404, { "Content-Type": "application/json" });
   res.end(JSON.stringify({ error: "Not found" }));
 });

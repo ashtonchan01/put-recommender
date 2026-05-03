@@ -6,3 +6,5 @@ export const DEFAULT_TICKERS = [
 
 export const TICKERS_STORAGE_KEY = "put-recommender-tickers";
 export const FILTERS_STORAGE_KEY = "put-recommender-filters";
+export const RISK_STORAGE_KEY = "put-recommender-risk";
+export const IBKR_CONFIG_KEY = "put-recommender-ibkr";

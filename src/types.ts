@@ -63,3 +63,43 @@ export const DEFAULT_FILTERS: Filters = {
 };
 
 export type OptionType = "puts" | "calls" | "all";
+
+export interface RiskSettings {
+  portfolioSize: number;
+  maxRiskPct: number;
+  targetPositions: number;
+}
+
+export const DEFAULT_RISK: RiskSettings = {
+  portfolioSize: 200000,
+  maxRiskPct: 1,
+  targetPositions: 10,
+};
+
+export interface PortfolioSuggestion {
+  picks: ScoredOption[];
+  totalCollateral: number;
+  monthlyIncome: number;
+  annualizedReturn: number;
+  targetMonthlyIncome: number;
+}
+
+export interface IBKRConfig {
+  token: string;
+  queryId: string;
+  proxyUrl: string;
+}
+
+export interface IBKRPosition {
+  symbol: string;
+  description: string;
+  assetCategory: string;
+  quantity: number;
+  currentValue: number;
+  unrealizedPnL: number;
+  putCall?: string;
+  strike?: number;
+  expiry?: string;
+  markPrice?: number;
+  costBasisPrice?: number;
+}

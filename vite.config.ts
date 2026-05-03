@@ -60,6 +60,10 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/yahoo-api/, ''),
       },
+      '/ibkr-flex': {
+        target: 'http://localhost:3456',
+        changeOrigin: true,
+      },
     },
   },
 })
