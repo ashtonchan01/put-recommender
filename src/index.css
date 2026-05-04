@@ -26,3 +26,21 @@ body {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Glass card effect */
+.glass-card {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 0.75rem;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.glass-card:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Subtle glow effects */
+.glow-emerald { box-shadow: 0 0 20px rgba(52, 211, 153, 0.1); }
+.glow-sky { box-shadow: 0 0 20px rgba(56, 189, 248, 0.1); }
+.glow-rose { box-shadow: 0 0 20px rgba(251, 113, 133, 0.1); }

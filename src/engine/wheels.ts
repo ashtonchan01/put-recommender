@@ -245,3 +245,162 @@ export function buildTickerPnL(cycles: WheelCycle[]): TickerPnL[] {
   }
   return Array.from(map.values()).sort((a, b) => b.totalCollected - a.totalCollected);
 }
+
+// ── Performance stats (Journal Profit View) ─────────────────────────────────
+
+export interface PerformanceStats {
+  netPnL: number;
+  totalTrades: number;
+  winCount: number;
+  lossCount: number;
+  winRate: number;           // 0-100
+  profitFactor: number;      // gross profit / gross loss
+  avgWin: number;
+  avgLoss: number;
+  avgWinLossRatio: number;
+  totalPremiumCollected: number;
+  openChains: number;
+  closedChains: number;
+  chainWinRate: number;      // 0-100
+  maxDrawdownPct: number;    // 0-100
+}
+
+export function computePerformanceStats(cycles: WheelCycle[], trades: IBKRTrade[]): PerformanceStats {
+  // Trade-level win/loss (each closed option trade)
+  const optTrades = trades.filter(t => t.assetCategory === "OPT");
+  let wins = 0, losses = 0, grossProfit = 0, grossLoss = 0;
+
+  // Pair sells + buys by looking at net cash per trade
+  for (const t of optTrades) {
+    if (t.netCash > 0) { wins++; grossProfit += t.netCash; }
+    else if (t.netCash < 0) { losses++; grossLoss += Math.abs(t.netCash); }
+  }
+
+  const totalTrades = wins + losses;
+  const winRate = totalTrades > 0 ? (wins / totalTrades) * 100 : 0;
+  const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? 999 : 0;
+  const avgWin = wins > 0 ? grossProfit / wins : 0;
+  const avgLoss = losses > 0 ? grossLoss / losses : 0;
+
+  // Chain-level stats
+  const closed = cycles.filter(c => c.status === "closed");
+  const open = cycles.filter(c => c.status !== "closed");
+  const chainWins = closed.filter(c => c.netPnL > 0).length;
+  const chainWinRate = closed.length > 0 ? (chainWins / closed.length) * 100 : 0;
+
+  const totalPremiumCollected = cycles.reduce((s, c) => s + c.totalPremiumCollected, 0);
+  const netPnL = optTrades.reduce((s, t) => s + t.netCash, 0);
+
+  // Max drawdown from cumulative P&L
+  const daily = buildDailyPnL(trades);
+  let peak = 0, maxDD = 0, cum = 0;
+  for (const d of daily) {
+    cum += d.value;
+    if (cum > peak) peak = cum;
+    const dd = peak > 0 ? ((peak - cum) / peak) * 100 : 0;
+    if (dd > maxDD) maxDD = dd;
+  }
+
+  return {
+    netPnL,
+    totalTrades,
+    winCount: wins,
+    lossCount: losses,
+    winRate,
+    profitFactor,
+    avgWin,
+    avgLoss,
+    avgWinLossRatio: avgLoss > 0 ? avgWin / avgLoss : 0,
+    totalPremiumCollected,
+    openChains: open.length,
+    closedChains: closed.length,
+    chainWinRate,
+    maxDrawdownPct: maxDD,
+  };
+}
+
+// ── Daily P&L ───────────────────────────────────────────────────────────────
+
+export interface DailyPnL {
+  date: string;     // "2026-04-20"
+  label: string;    // "Apr 20"
+  value: number;    // net P&L that day
+}
+
+export function buildDailyPnL(trades: IBKRTrade[]): DailyPnL[] {
+  const map = new Map<string, number>();
+
+  for (const t of trades) {
+    if (t.assetCategory !== "OPT") continue;
+    const date = t.dateTime.slice(0, 10);
+    map.set(date, (map.get(date) ?? 0) + t.netCash);
+  }
+
+  return Array.from(map.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, value]) => {
+      const d = new Date(date + "T12:00:00");
+      const label = d.toLocaleString("default", { month: "short", day: "numeric" });
+      return { date, label, value };
+    });
+}
+
+// ── Cumulative P&L ──────────────────────────────────────────────────────────
+
+export function buildCumulativePnL(daily: DailyPnL[]): { label: string; value: number }[] {
+  let cum = 0;
+  return daily.map(d => {
+    cum += d.value;
+    return { label: d.label, value: cum };
+  });
+}
+
+// ── Calendar P&L (grouped by month → days) ──────────────────────────────────
+
+export interface CalendarMonth {
+  month: string;     // "2026-04"
+  label: string;     // "April 2026"
+  days: { date: string; dayOfMonth: number; pnl: number; weekday: number }[];
+  firstWeekday: number; // 0=Sun, 1=Mon...
+  totalDays: number;
+  monthPnL: number;
+}
+
+export function buildCalendarData(trades: IBKRTrade[]): CalendarMonth[] {
+  const dayMap = new Map<string, number>();
+  for (const t of trades) {
+    if (t.assetCategory !== "OPT") continue;
+    const date = t.dateTime.slice(0, 10);
+    dayMap.set(date, (dayMap.get(date) ?? 0) + t.netCash);
+  }
+
+  const monthMap = new Map<string, CalendarMonth>();
+  for (const [date, pnl] of dayMap) {
+    const month = date.slice(0, 7);
+    if (!monthMap.has(month)) {
+      const d = new Date(date + "T12:00:00");
+      const label = d.toLocaleString("default", { month: "long", year: "numeric" });
+      const firstDay = new Date(parseInt(month.slice(0, 4)), parseInt(month.slice(5, 7)) - 1, 1);
+      const lastDay = new Date(parseInt(month.slice(0, 4)), parseInt(month.slice(5, 7)), 0);
+      monthMap.set(month, {
+        month,
+        label,
+        days: [],
+        firstWeekday: firstDay.getDay(),
+        totalDays: lastDay.getDate(),
+        monthPnL: 0,
+      });
+    }
+    const entry = monthMap.get(month)!;
+    const d = new Date(date + "T12:00:00");
+    entry.days.push({
+      date,
+      dayOfMonth: d.getDate(),
+      pnl,
+      weekday: d.getDay(),
+    });
+    entry.monthPnL += pnl;
+  }
+
+  return Array.from(monthMap.values()).sort((a, b) => b.month.localeCompare(a.month));
+}

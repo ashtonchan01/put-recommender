@@ -103,10 +103,10 @@ export default function App() {
     <div className="min-h-screen bg-slate-950 text-white flex flex-col">
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-20 bg-slate-900/95 backdrop-blur border-b border-slate-700/60 px-4 py-3">
+      <header className="sticky top-0 z-20 bg-slate-900/80 backdrop-blur-xl border-b border-white/5 px-4 py-3">
         <div className="flex items-center justify-between gap-2">
           <div>
-            <h1 className="text-base font-bold text-white">Wheel Tracker</h1>
+            <h1 className="text-base font-bold bg-gradient-to-r from-sky-400 to-cyan-400 bg-clip-text text-transparent">Wheel Tracker</h1>
             <p className="text-xs text-slate-500">
               {appView === "actions" && (actions.length > 0 ? `${actions.length} action${actions.length !== 1 ? "s" : ""}` : "All clear")}
               {appView === "journal" && (cycles.length > 0 ? `${cycles.filter(c => c.status !== "closed").length} open wheels` : "No data")}
@@ -116,8 +116,8 @@ export default function App() {
           </div>
           {appView === "scan" && (
             scanning
-              ? <button onClick={abort} className="px-3 py-1.5 text-sm rounded-lg bg-red-900/60 border border-red-700 text-red-300 hover:text-red-100 transition-colors">Stop</button>
-              : <button onClick={() => { setAppView("scan"); scan(); }} disabled={tickers.length === 0} className="px-3 py-1.5 text-sm rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white font-medium transition-colors disabled:opacity-40">Scan</button>
+              ? <button onClick={abort} className="px-3 py-1.5 text-sm rounded-lg bg-rose-900/60 border border-rose-700/50 text-rose-300 hover:text-rose-100 transition-colors">Stop</button>
+              : <button onClick={() => { setAppView("scan"); scan(); }} disabled={tickers.length === 0} className="px-3 py-1.5 text-sm rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-medium transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-40">Scan</button>
           )}
         </div>
 
@@ -126,10 +126,12 @@ export default function App() {
           <div className="flex gap-1 mt-2.5">
             {(["puts", "calls", "all"] as OptionType[]).map(t => (
               <button key={t} onClick={() => setOptionType(t)}
-                className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-colors capitalize ${
+                className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-all ${
                   optionType === t
-                    ? t === "puts" ? "bg-rose-700 text-white" : t === "calls" ? "bg-violet-700 text-white" : "bg-sky-700 text-white"
-                    : "bg-slate-800 text-slate-400 hover:text-white"
+                    ? t === "puts" ? "bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-lg shadow-rose-500/20"
+                      : t === "calls" ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-500/20"
+                      : "bg-gradient-to-r from-sky-600 to-cyan-600 text-white shadow-lg shadow-sky-500/20"
+                    : "bg-white/5 text-slate-400 hover:text-white hover:bg-white/10"
                 }`}>
                 {t === "puts"  ? `Puts${hasResults ? ` (${allPuts.filter(o => o.signal !== "SKIP").length})` : ""}` :
                  t === "calls" ? `Calls${hasResults ? ` (${allCalls.filter(o => o.signal !== "SKIP").length})` : ""}` :
@@ -152,6 +154,8 @@ export default function App() {
           syncError={syncError}
           hasScanned={hasScanned}
           onScan={() => { setAppView("scan"); scan(); }}
+          cycles={cycles}
+          monthlyIncome={monthly}
         />
       )}
 
@@ -238,13 +242,13 @@ export default function App() {
           {/* IBKR Connection */}
           <section>
             <h2 className="text-sm font-semibold text-slate-300 mb-3">IBKR Connection</h2>
-            <div className="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 flex flex-col gap-3">
+            <div className="glass-card p-4 flex flex-col gap-3">
               <IBKRField label="Flex Token" placeholder="Paste your IBKR Flex token" value={ibkrConfig.token} onChange={v => setIBKRConfig(c => ({...c, token: v}))} />
               <IBKRField label="Query ID" placeholder="Paste your Flex Query ID" value={ibkrConfig.queryId} onChange={v => setIBKRConfig(c => ({...c, queryId: v}))} />
 
-              <div className="bg-slate-900/60 rounded-lg p-3 text-xs text-slate-400 flex flex-col gap-1.5 mt-1">
+              <div className="bg-slate-900/40 rounded-lg p-3 text-xs text-slate-400 flex flex-col gap-1.5 mt-1">
                 <p className="font-semibold text-slate-300">Step 1 — Create Flex Query in IBKR</p>
-                <p>Client Portal → Performance &amp; Reports → Flex Queries → Create</p>
+                <p>Client Portal �� Performance &amp; Reports → Flex Queries → Create</p>
                 <p>Enable these sections (Last 365 Days, XML format):</p>
                 <p className="pl-2 text-slate-300">• Trades &amp; Executions</p>
                 <p className="pl-2 text-slate-300">• Open Positions</p>
@@ -252,13 +256,13 @@ export default function App() {
                 <p>Save → note the <span className="text-slate-300">Query ID</span>.</p>
 
                 <p className="font-semibold text-slate-300 mt-1">Step 2 — Get Flex Token</p>
-                <p>Client Portal → Settings → Account Settings → Flex Web Service → Generate Token (set expiry to 1 year).</p>
+                <p>Client Portal �� Settings → Account Settings → Flex Web Service → Generate Token (set expiry to 1 year).</p>
 
                 <p className="font-semibold text-slate-300 mt-1">Step 3 — Paste above &amp; hit Sync</p>
               </div>
 
               <button onClick={handleSync} disabled={syncing}
-                className="w-full py-2.5 bg-sky-700 hover:bg-sky-600 disabled:opacity-40 text-white font-medium rounded-xl text-sm transition-colors">
+                className="w-full py-2.5 bg-gradient-to-r from-sky-600 to-cyan-600 hover:from-sky-500 hover:to-cyan-500 disabled:opacity-40 text-white font-medium rounded-xl text-sm transition-all shadow-lg shadow-sky-500/20">
                 {syncing ? "Syncing…" : "Test Sync"}
               </button>
               {syncError && <p className="text-rose-400 text-xs">{syncError}</p>}
@@ -290,17 +294,18 @@ export default function App() {
 
       {/* ── Bottom navigation ────────────────────────────────────────────── */}
       {appView !== "scan" && (
-        <nav className="sticky bottom-0 z-10 bg-slate-900/95 backdrop-blur border-t border-slate-700/60 flex"
+        <nav className="sticky bottom-0 z-10 bg-slate-900/80 backdrop-blur-xl border-t border-white/5 flex"
           style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
           {nav.map(item => (
             <button key={item.id} onClick={() => { setAppView(item.id); setFiltersOpen(false); }}
-              className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 text-xs transition-colors relative ${
-                appView === item.id ? "text-sky-400" : "text-slate-500 hover:text-slate-300"
+              className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 text-xs transition-all relative ${
+                appView === item.id ? "text-cyan-400" : "text-slate-500 hover:text-slate-300"
               }`}>
               <span className="text-base leading-none">{item.icon}</span>
-              <span>{item.label}</span>
+              <span className="font-medium">{item.label}</span>
+              {appView === item.id && <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-gradient-to-r from-sky-400 to-cyan-400" />}
               {(item.badge ?? 0) > 0 && (
-                <span className="absolute top-1.5 right-1/4 -translate-x-1 w-4 h-4 bg-rose-500 rounded-full text-white text-xs flex items-center justify-center font-bold leading-none">
+                <span className="absolute top-1.5 right-1/4 -translate-x-1 w-4 h-4 bg-rose-500 rounded-full text-white text-xs flex items-center justify-center font-bold leading-none animate-pulse">
                   {item.badge}
                 </span>
               )}
@@ -311,17 +316,18 @@ export default function App() {
 
       {/* Scan view has its own filter bar as sticky bottom; show nav above it */}
       {appView === "scan" && (
-        <nav className="sticky bottom-[3.5rem] z-10 bg-slate-900/95 backdrop-blur border-t border-slate-700/60 flex"
+        <nav className="sticky bottom-[3.5rem] z-10 bg-slate-900/80 backdrop-blur-xl border-t border-white/5 flex"
           style={{ paddingBottom: 0 }}>
           {nav.map(item => (
             <button key={item.id} onClick={() => { setAppView(item.id); setFiltersOpen(false); }}
-              className={`flex-1 flex flex-col items-center gap-0.5 py-2 text-xs transition-colors relative ${
-                appView === item.id ? "text-sky-400" : "text-slate-500 hover:text-slate-300"
+              className={`flex-1 flex flex-col items-center gap-0.5 py-2 text-xs transition-all relative ${
+                appView === item.id ? "text-cyan-400" : "text-slate-500 hover:text-slate-300"
               }`}>
               <span className="text-sm leading-none">{item.icon}</span>
-              <span>{item.label}</span>
+              <span className="font-medium">{item.label}</span>
+              {appView === item.id && <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-gradient-to-r from-sky-400 to-cyan-400" />}
               {(item.badge ?? 0) > 0 && (
-                <span className="absolute top-1 right-1/4 -translate-x-1 w-4 h-4 bg-rose-500 rounded-full text-white text-xs flex items-center justify-center font-bold leading-none">
+                <span className="absolute top-1 right-1/4 -translate-x-1 w-4 h-4 bg-rose-500 rounded-full text-white text-xs flex items-center justify-center font-bold leading-none animate-pulse">
                   {item.badge}
                 </span>
               )}
@@ -333,12 +339,12 @@ export default function App() {
   );
 }
 
-function IBKRField({ label, placeholder, value, onChange, secret }: { label: string; placeholder: string; value: string; onChange: (v: string) => void; secret?: boolean }) {
+function IBKRField({ label, placeholder, value, onChange }: { label: string; placeholder: string; value: string; onChange: (v: string) => void }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-xs text-slate-400">{label}</label>
-      <input type={secret ? "password" : "text"} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-        className="bg-slate-900/60 border border-slate-600 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-sky-500" />
+      <label className="text-xs text-slate-400 font-medium">{label}</label>
+      <input type="text" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+        className="bg-slate-900/40 border border-white/10 rounded-lg px-3 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all" />
     </div>
   );
 }
