@@ -86,14 +86,20 @@ async function flexRequest(proxyBase: string, token: string, queryId: string): P
 }
 
 async function flexStatement(proxyBase: string, refCode: string): Promise<string> {
-  // IBKR takes 1–5 seconds to prepare the report
-  await delay(3000);
-  for (let attempt = 0; attempt < 3; attempt++) {
+  // IBKR takes 1–10 seconds to prepare the report
+  await delay(5000);
+  for (let attempt = 0; attempt < 5; attempt++) {
     const res = await fetch(`${proxyBase}/ibkr-flex/statement?q=${encodeURIComponent(refCode)}`);
     const text = await res.text();
-    // If still processing, IBKR returns an XML with Status "Please re-try"
-    if (text.includes("Please re-try") || text.includes("retry")) {
-      await delay(3000);
+    // IBKR returns various "not ready" messages — retry on any of them
+    if (
+      text.includes("Please re-try") ||
+      text.includes("retry") ||
+      text.includes("could not be generated") ||
+      text.includes("try again") ||
+      text.includes("Statement generation in progress")
+    ) {
+      await delay(5000);
       continue;
     }
     if (!res.ok) throw new Error(`Statement fetch failed: ${res.status}`);
