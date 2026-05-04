@@ -11,8 +11,8 @@ html, body, #root {
 }
 
 body {
-  /* Extend background into status bar area on iOS */
-  background-color: #0f172a;
+  background-color: #000000;
+  color: #ffffff;
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
@@ -27,20 +27,25 @@ body {
   display: none;
 }
 
-/* Glass card effect */
+/* Glass card — true black variant */
 .glass-card {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%);
+  background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 0.75rem;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
 }
-
 .glass-card:hover {
   border-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Subtle glow effects */
-.glow-emerald { box-shadow: 0 0 20px rgba(52, 211, 153, 0.1); }
-.glow-sky { box-shadow: 0 0 20px rgba(56, 189, 248, 0.1); }
-.glow-rose { box-shadow: 0 0 20px rgba(251, 113, 133, 0.1); }
+/* Accent gradient text */
+.text-accent {
+  background: linear-gradient(135deg, #a3e635, #22d3ee, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Volt green accent */
+.glow-volt { box-shadow: 0 0 24px rgba(163, 230, 53, 0.15); }
+.glow-cyan { box-shadow: 0 0 24px rgba(34, 211, 238, 0.15); }
+.glow-purple { box-shadow: 0 0 24px rgba(167, 139, 250, 0.12); }

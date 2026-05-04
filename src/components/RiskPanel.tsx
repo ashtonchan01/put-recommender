@@ -14,12 +14,12 @@ export function RiskPanel({ risk, onChange }: Props) {
   const monthlyTarget5pct = risk.portfolioSize * 0.05;
 
   return (
-    <div className="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 flex flex-col gap-4">
-      <h3 className="text-sm font-semibold text-slate-200">Risk Settings</h3>
+    <div className="glass-card p-4 flex flex-col gap-4">
+      <h3 className="text-sm font-semibold text-white">Risk Settings</h3>
 
       {/* Portfolio size */}
       <div className="flex flex-col gap-1">
-        <div className="flex justify-between text-xs text-slate-400">
+        <div className="flex justify-between text-xs text-neutral-400">
           <span>Portfolio Size</span>
           <span className="text-white font-medium">${risk.portfolioSize.toLocaleString()}</span>
         </div>
@@ -30,7 +30,7 @@ export function RiskPanel({ risk, onChange }: Props) {
           onChange={(e) => set("portfolioSize", Number(e.target.value))}
           className="w-full accent-sky-500 cursor-pointer h-1.5"
         />
-        <div className="flex justify-between text-xs text-slate-600">
+        <div className="flex justify-between text-xs text-neutral-600">
           <span>$50k</span>
           <span>$1M</span>
         </div>
@@ -38,7 +38,7 @@ export function RiskPanel({ risk, onChange }: Props) {
 
       {/* Max risk per trade */}
       <div className="flex flex-col gap-1">
-        <div className="flex justify-between text-xs text-slate-400">
+        <div className="flex justify-between text-xs text-neutral-400">
           <span>Max Risk / Trade</span>
           <span className="text-white font-medium">{risk.maxRiskPct}% = ${maxRiskDollars.toLocaleString()}</span>
         </div>
@@ -49,7 +49,7 @@ export function RiskPanel({ risk, onChange }: Props) {
           onChange={(e) => set("maxRiskPct", Number(e.target.value))}
           className="w-full accent-emerald-500 cursor-pointer h-1.5"
         />
-        <div className="flex justify-between text-xs text-slate-600">
+        <div className="flex justify-between text-xs text-neutral-600">
           <span>0.5%</span>
           <span>3%</span>
         </div>
@@ -57,7 +57,7 @@ export function RiskPanel({ risk, onChange }: Props) {
 
       {/* Target positions */}
       <div className="flex flex-col gap-1">
-        <div className="flex justify-between text-xs text-slate-400">
+        <div className="flex justify-between text-xs text-neutral-400">
           <span>Target Positions</span>
           <span className="text-white font-medium">{risk.targetPositions}</span>
         </div>
@@ -68,29 +68,29 @@ export function RiskPanel({ risk, onChange }: Props) {
           onChange={(e) => set("targetPositions", Number(e.target.value))}
           className="w-full accent-violet-500 cursor-pointer h-1.5"
         />
-        <div className="flex justify-between text-xs text-slate-600">
+        <div className="flex justify-between text-xs text-neutral-600">
           <span>4</span>
           <span>16</span>
         </div>
       </div>
 
       {/* Monthly income targets */}
-      <div className="border-t border-slate-700/60 pt-3 grid grid-cols-2 gap-2">
-        <div className="bg-slate-900/60 rounded-lg p-2.5 text-center">
-          <p className="text-slate-500 text-xs">Conservative target</p>
+      <div className="border-t border-white/[0.06] pt-3 grid grid-cols-2 gap-2">
+        <div className="bg-white/[0.03] rounded-lg p-2.5 text-center">
+          <p className="text-neutral-500 text-xs">Conservative target</p>
           <p className="text-emerald-400 font-semibold text-sm">${monthlyTarget3pct.toLocaleString(undefined, { maximumFractionDigits: 0 })}/mo</p>
-          <p className="text-slate-600 text-xs">3% monthly</p>
+          <p className="text-neutral-600 text-xs">3% monthly</p>
         </div>
-        <div className="bg-slate-900/60 rounded-lg p-2.5 text-center">
-          <p className="text-slate-500 text-xs">Stretch target</p>
+        <div className="bg-white/[0.03] rounded-lg p-2.5 text-center">
+          <p className="text-neutral-500 text-xs">Stretch target</p>
           <p className="text-amber-400 font-semibold text-sm">${monthlyTarget5pct.toLocaleString(undefined, { maximumFractionDigits: 0 })}/mo</p>
-          <p className="text-slate-600 text-xs">5% monthly</p>
+          <p className="text-neutral-600 text-xs">5% monthly</p>
         </div>
       </div>
 
       {/* Rules reminder */}
-      <div className="border-t border-slate-700/60 pt-3 flex flex-col gap-1.5">
-        <p className="text-slate-500 text-xs font-medium uppercase tracking-wide">Framework Rules</p>
+      <div className="border-t border-white/[0.06] pt-3 flex flex-col gap-1.5">
+        <p className="text-neutral-500 text-xs font-medium uppercase tracking-wide">Framework Rules</p>
         <Rule icon="✓" text={`Max $${maxRiskDollars.toLocaleString()} collateral per trade`} />
         <Rule icon="✓" text="Sell 0.20–0.30 delta — not too cheap, not too likely" />
         <Rule icon="✓" text="Close winners at 50% profit; losers at 50% max loss" />
@@ -104,7 +104,7 @@ export function RiskPanel({ risk, onChange }: Props) {
 
 function Rule({ icon, text }: { icon: string; text: string }) {
   return (
-    <div className="flex items-start gap-1.5 text-xs text-slate-400">
+    <div className="flex items-start gap-1.5 text-xs text-neutral-400">
       <span className="text-emerald-500 shrink-0 mt-0.5">{icon}</span>
       <span>{text}</span>
     </div>

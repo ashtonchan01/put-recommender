@@ -65,7 +65,7 @@ export function MiniLineChart({ data, height = 120, color = "emerald", showArea 
       {/* Grid lines */}
       {[0, 0.25, 0.5, 0.75, 1].map(pct => {
         const y = PAD.t + iH * (1 - pct);
-        return <line key={pct} x1={PAD.l} y1={y} x2={PAD.l + iW} y2={y} stroke="#1e293b" strokeWidth="0.5" />;
+        return <line key={pct} x1={PAD.l} y1={y} x2={PAD.l + iW} y2={y} stroke="#1a1a1a" strokeWidth="0.5" />;
       })}
 
       {/* Area fill */}
@@ -78,8 +78,8 @@ export function MiniLineChart({ data, height = 120, color = "emerald", showArea 
       {hover && (
         <>
           <line x1={hover.x} y1={PAD.t} x2={hover.x} y2={PAD.t + iH} stroke={hex} strokeWidth="0.5" strokeDasharray="3,3" />
-          <circle cx={hover.x} cy={hover.y} r="4" fill={hex} stroke="#0f172a" strokeWidth="2" />
-          <rect x={hover.x - 40} y={hover.y - 28} width="80" height="22" rx="4" fill="#1e293b" stroke="#334155" strokeWidth="0.5" />
+          <circle cx={hover.x} cy={hover.y} r="4" fill={hex} stroke="#000000" strokeWidth="2" />
+          <rect x={hover.x - 40} y={hover.y - 28} width="80" height="22" rx="4" fill="#1a1a1a" stroke="#262626" strokeWidth="0.5" />
           <text x={hover.x} y={hover.y - 14} textAnchor="middle" fill="white" fontSize="10" fontWeight="600">
             {formatValue(hover.value)}
           </text>

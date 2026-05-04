@@ -10,7 +10,7 @@ export function FilterBar({ filters, onChange }: Props) {
     onChange({ ...filters, [key]: value });
 
   return (
-    <div className="bg-slate-900 border-t border-slate-700/60 px-4 py-3 flex flex-wrap gap-3">
+    <div className="bg-neutral-950 border-t border-white/[0.06] px-4 py-3 flex flex-wrap gap-3">
       <FilterSlider
         label="Δ Min"
         value={filters.deltaMin}
@@ -63,7 +63,7 @@ function FilterSlider({
 }) {
   return (
     <div className="flex flex-col gap-1 flex-1 min-w-[80px]">
-      <div className="flex justify-between text-xs text-slate-400">
+      <div className="flex justify-between text-xs text-neutral-400">
         <span>{label}</span>
         <span className="text-white font-medium">{format(value)}</span>
       </div>

@@ -28,7 +28,7 @@ export function MiniBarChart({ data, height = 100, formatValue = v => `$${v.toLo
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height }}>
       {/* Baseline */}
-      <line x1={PAD.l} y1={baselineY} x2={PAD.l + iW} y2={baselineY} stroke="#475569" strokeWidth="0.5" strokeDasharray="4,3" />
+      <line x1={PAD.l} y1={baselineY} x2={PAD.l + iW} y2={baselineY} stroke="#404040" strokeWidth="0.5" strokeDasharray="4,3" />
 
       {display.map((d, i) => {
         const x = PAD.l + gap + i * (barW + gap);
@@ -55,7 +55,7 @@ export function MiniBarChart({ data, height = 100, formatValue = v => `$${v.toLo
             {isHover && (
               <>
                 <rect x={x + barW / 2 - 35} y={Math.min(y, baselineY) - 22} width="70" height="18" rx="4"
-                  fill="#1e293b" stroke="#334155" strokeWidth="0.5" />
+                  fill="#1a1a1a" stroke="#262626" strokeWidth="0.5" />
                 <text x={x + barW / 2} y={Math.min(y, baselineY) - 9} textAnchor="middle"
                   fill="white" fontSize="9" fontWeight="600">
                   {formatValue(d.value)}

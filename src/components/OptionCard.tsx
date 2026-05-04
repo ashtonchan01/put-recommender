@@ -9,13 +9,13 @@ interface Props {
 const signalStyle = {
   STRONG: "border-emerald-500/40 bg-emerald-400/5",
   OK: "border-sky-500/40 bg-sky-400/5",
-  SKIP: "border-slate-600/40 bg-slate-800/40",
+  SKIP: "border-neutral-600/40 bg-neutral-800/40",
 };
 
 const signalBadge = {
   STRONG: "text-emerald-400 bg-emerald-400/15 border-emerald-500/30",
   OK: "text-sky-400 bg-sky-400/15 border-sky-500/30",
-  SKIP: "text-slate-400 bg-slate-700/40 border-slate-600/30",
+  SKIP: "text-neutral-400 bg-neutral-700/40 border-neutral-600/30",
 };
 
 const typeBadge = {
@@ -38,13 +38,13 @@ export function OptionCard({ option, risk }: Props) {
           <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${typeBadge[c.type]}`}>
             {c.type.toUpperCase()}
           </span>
-          <span className="text-sm text-slate-400">${price.toFixed(2)}</span>
+          <span className="text-sm text-neutral-400">${price.toFixed(2)}</span>
         </div>
         <div className="flex flex-col items-end gap-1 shrink-0">
           <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${signalBadge[signal]}`}>
             {signal}
           </span>
-          <span className="text-xs text-slate-500">Score {score}</span>
+          <span className="text-xs text-neutral-500">Score {score}</span>
         </div>
       </div>
 
@@ -56,7 +56,7 @@ export function OptionCard({ option, risk }: Props) {
       </div>
 
       {/* Detail row */}
-      <div className="grid grid-cols-4 gap-1 text-center border-t border-slate-700/40 pt-3">
+      <div className="grid grid-cols-4 gap-1 text-center border-t border-white/5 pt-3">
         <Metric label="Expiry" value={c.expiry} />
         <Metric label="DTE" value={String(c.dte)} />
         <Metric label="Delta" value={c.delta.toFixed(2)} />
@@ -64,14 +64,14 @@ export function OptionCard({ option, risk }: Props) {
       </div>
 
       {/* Position sizing */}
-      <div className="grid grid-cols-3 gap-1 text-center bg-slate-900/50 rounded-lg p-2 border-t border-slate-700/40">
+      <div className="grid grid-cols-3 gap-1 text-center bg-neutral-900/40 rounded-lg p-2 border-t border-white/5">
         <Metric label={`Max @ ${risk.maxRiskPct}% risk`} value={`${maxContracts} contract${maxContracts !== 1 ? "s" : ""}`} />
         <Metric label="Collateral/contract" value={`$${collateralPerContract.toLocaleString()}`} />
         <Metric label="Est. monthly (1 ct)" value={`$${monthlyEstimate.toFixed(0)}`} />
       </div>
 
       {/* Liquidity */}
-      <div className="flex justify-between text-xs text-slate-500 border-t border-slate-700/40 pt-2">
+      <div className="flex justify-between text-xs text-neutral-500 border-t border-white/5 pt-2">
         <span>Vol {c.volume.toLocaleString()}</span>
         <span>OI {c.openInterest.toLocaleString()}</span>
         <span>IV {(c.iv * 100).toFixed(0)}%</span>
@@ -91,8 +91,8 @@ export function OptionCard({ option, risk }: Props) {
 function Metric({ label, value, large = false }: { label: string; value: string; large?: boolean }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-slate-500" style={{ fontSize: "10px" }}>{label}</span>
-      <span className={`font-semibold ${large ? "text-white text-base" : "text-slate-200 text-xs"}`}>
+      <span className="text-neutral-500" style={{ fontSize: "10px" }}>{label}</span>
+      <span className={`font-semibold ${large ? "text-white text-base" : "text-neutral-200 text-xs"}`}>
         {value}
       </span>
     </div>

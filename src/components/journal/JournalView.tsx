@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { WheelCycle, IBKRTrade } from "../../types";
 import type { MonthlyIncome, TickerPnL, PerformanceStats, DailyPnL, CalendarMonth } from "../../engine/wheels";
 import { computePerformanceStats, buildDailyPnL, buildCumulativePnL, buildCalendarData } from "../../engine/wheels";
@@ -13,6 +13,8 @@ interface Props {
   monthlyIncome: MonthlyIncome[];
   tickerPnL: TickerPnL[];
   hasData: boolean;
+  initialTab?: Tab;
+  onTabChange?: (tab: Tab) => void;
 }
 
 const TABS: { id: Tab; label: string; short: string }[] = [
@@ -23,8 +25,9 @@ const TABS: { id: Tab; label: string; short: string }[] = [
   { id: "ticker", label: "Per-Ticker", short: "Ticker" },
 ];
 
-export function JournalView({ cycles, trades, monthlyIncome, tickerPnL, hasData }: Props) {
-  const [tab, setTab] = useState<Tab>("profit");
+export function JournalView({ cycles, trades, monthlyIncome, tickerPnL, hasData, initialTab, onTabChange }: Props) {
+  const [tab, setTab] = useState<Tab>(initialTab ?? "profit");
+  const changeTab = (t: Tab) => { setTab(t); onTabChange?.(t); };
 
   // Derived data
   const perfStats = useMemo(() => computePerformanceStats(cycles, trades), [cycles, trades]);
@@ -32,14 +35,19 @@ export function JournalView({ cycles, trades, monthlyIncome, tickerPnL, hasData 
   const cumulativePnL = useMemo(() => buildCumulativePnL(dailyPnL), [dailyPnL]);
   const calendarData = useMemo(() => buildCalendarData(trades), [trades]);
 
+  // Sync tab from sidebar navigation
+  useEffect(() => {
+    if (initialTab && initialTab !== tab) setTab(initialTab);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialTab]);
+
   if (!hasData) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center px-6"
-        style={{ paddingBottom: "calc(4.5rem + env(safe-area-inset-bottom))" }}>
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-500/20 to-violet-500/20 flex items-center justify-center text-3xl">📓</div>
+      <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center px-6">
+        <div className="w-16 h-16 rounded-2xl bg-white/[0.04] flex items-center justify-center text-3xl">📓</div>
         <div>
           <p className="text-white font-semibold">No journal data yet</p>
-          <p className="text-slate-400 text-sm mt-1">Sync your IBKR account to populate the journal.</p>
+          <p className="text-neutral-500 text-sm mt-1">Sync your IBKR account to populate the journal.</p>
         </div>
       </div>
     );
@@ -47,26 +55,24 @@ export function JournalView({ cycles, trades, monthlyIncome, tickerPnL, hasData 
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
-      {/* Tab bar */}
-      <div className="flex gap-1 px-4 py-2.5 border-b border-white/5 bg-slate-900/80 backdrop-blur-sm">
+      {/* Mobile tab bar (hidden on desktop where sidebar handles this) */}
+      <div className="flex gap-1 px-4 py-2.5 border-b border-white/[0.06] lg:hidden">
         {TABS.map(t => (
           <button
             key={t.id}
-            onClick={() => setTab(t.id)}
+            onClick={() => changeTab(t.id)}
             className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all ${
               tab === t.id
-                ? "bg-gradient-to-r from-sky-600 to-cyan-600 text-white shadow-lg shadow-sky-500/20"
-                : "text-slate-400 hover:text-white hover:bg-white/5"
+                ? "bg-white/10 text-white"
+                : "text-neutral-500 hover:text-white hover:bg-white/[0.04]"
             }`}
           >
-            <span className="hidden sm:inline">{t.label}</span>
-            <span className="sm:hidden">{t.short}</span>
+            {t.short}
           </button>
         ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4"
-        style={{ paddingBottom: "calc(4.5rem + env(safe-area-inset-bottom))" }}>
+      <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-4 flex flex-col gap-4 max-w-4xl">
         {tab === "profit"   && <ProfitTab stats={perfStats} monthly={monthlyIncome} dailyPnL={dailyPnL} cumulativePnL={cumulativePnL} cycles={cycles} />}
         {tab === "calendar" && <CalendarTab months={calendarData} />}
         {tab === "wheels"   && <WheelsTab cycles={cycles} />}
@@ -154,7 +160,7 @@ function ProfitTab({ stats, monthly, dailyPnL, cumulativePnL, cycles }: {
           <div className="flex justify-between px-1 mt-2">
             {monthly.slice(-3).reverse().map(m => (
               <div key={m.month} className="text-center">
-                <p className="text-slate-500 text-xs">{m.label}</p>
+                <p className="text-neutral-500 text-xs">{m.label}</p>
                 <p className={`font-semibold text-xs ${m.netIncome >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                   {m.netIncome >= 0 ? "+" : ""}${m.netIncome.toFixed(0)}
                 </p>
@@ -178,10 +184,10 @@ function ProfitTab({ stats, monthly, dailyPnL, cumulativePnL, cycles }: {
       {/* Max Drawdown */}
       <div className="glass-card p-4">
         <div className="flex items-center justify-between">
-          <span className="text-slate-400 text-xs font-medium">Max Drawdown</span>
+          <span className="text-neutral-400 text-xs font-medium">Max Drawdown</span>
           <span className="text-rose-400 font-bold text-sm">-{stats.maxDrawdownPct.toFixed(1)}%</span>
         </div>
-        <div className="mt-2 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+        <div className="mt-2 h-1.5 bg-neutral-800 rounded-full overflow-hidden">
           <div className="h-full bg-gradient-to-r from-rose-500 to-rose-400 rounded-full" style={{ width: `${Math.min(stats.maxDrawdownPct, 100)}%` }} />
         </div>
       </div>
@@ -189,7 +195,7 @@ function ProfitTab({ stats, monthly, dailyPnL, cumulativePnL, cycles }: {
       {/* Best Chains */}
       {bestChains.length > 0 && (
         <div className="flex flex-col gap-2">
-          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Best Chains</h3>
+          <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Best Chains</h3>
           {bestChains.map(c => <MiniChainCard key={c.id} cycle={c} />)}
         </div>
       )}
@@ -197,7 +203,7 @@ function ProfitTab({ stats, monthly, dailyPnL, cumulativePnL, cycles }: {
       {/* Worst Chains */}
       {worstChains.length > 0 && (
         <div className="flex flex-col gap-2">
-          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Worst Chains</h3>
+          <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Worst Chains</h3>
           {worstChains.map(c => <MiniChainCard key={c.id} cycle={c} />)}
         </div>
       )}
@@ -223,7 +229,7 @@ function CalendarTab({ months }: { months: CalendarMonth[] }) {
           {/* Day headers */}
           <div className="grid grid-cols-7 gap-1 mb-1">
             {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map(d => (
-              <div key={d} className="text-center text-slate-600 text-xs font-medium py-1">{d}</div>
+              <div key={d} className="text-center text-neutral-600 text-xs font-medium py-1">{d}</div>
             ))}
           </div>
           {/* Day cells */}
@@ -246,10 +252,10 @@ function CalendarTab({ months }: { months: CalendarMonth[] }) {
                       ? pnl >= 0
                         ? "bg-emerald-500/15 border border-emerald-500/20"
                         : "bg-rose-500/15 border border-rose-500/20"
-                      : "bg-slate-800/30"
+                      : "bg-neutral-800/30"
                   }`}
                 >
-                  <span className="text-slate-500" style={{ fontSize: "9px" }}>{day}</span>
+                  <span className="text-neutral-500" style={{ fontSize: "9px" }}>{day}</span>
                   {hasTrade && (
                     <span className={`font-bold ${pnl >= 0 ? "text-emerald-400" : "text-rose-400"}`} style={{ fontSize: "8px" }}>
                       {pnl >= 0 ? "+" : ""}{pnl >= 1000 || pnl <= -1000 ? `${(pnl / 1000).toFixed(1)}k` : pnl.toFixed(0)}
@@ -290,12 +296,12 @@ function WheelStageBar({ status }: { status: string }) {
               ? i === active
                 ? "bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow-sm shadow-sky-500/30"
                 : "bg-emerald-500/20 text-emerald-400"
-              : "bg-slate-800 text-slate-600"
+              : "bg-neutral-800 text-neutral-600"
           }`} style={{ fontSize: "9px" }}>
             {stage}
           </div>
           {i < WHEEL_STAGES.length - 1 && (
-            <div className={`w-2 h-px ${i < active ? "bg-emerald-500/40" : "bg-slate-700"}`} />
+            <div className={`w-2 h-px ${i < active ? "bg-emerald-500/40" : "bg-neutral-700"}`} />
           )}
         </div>
       ))}
@@ -315,10 +321,10 @@ function WheelsTab({ cycles }: { cycles: WheelCycle[] }) {
 
       {closed.length > 0 && (
         <>
-          <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-3">Closed Cycles</h3>
+          <h3 className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mt-3">Closed Cycles</h3>
           {closed.slice(0, 10).map(c => <WheelCard key={c.id} cycle={c} />)}
           {closed.length > 10 && (
-            <p className="text-xs text-slate-600 text-center">{closed.length - 10} more closed cycles</p>
+            <p className="text-xs text-neutral-600 text-center">{closed.length - 10} more closed cycles</p>
           )}
         </>
       )}
@@ -330,7 +336,7 @@ const statusConfig: Record<string, { label: string; gradient: string }> = {
   csp_open: { label: "CSP Open", gradient: "from-rose-500 to-pink-500" },
   assigned: { label: "Assigned", gradient: "from-amber-500 to-orange-500" },
   cc_open:  { label: "CC Open",  gradient: "from-violet-500 to-purple-500" },
-  closed:   { label: "Closed",   gradient: "from-slate-500 to-slate-600" },
+  closed:   { label: "Closed",   gradient: "from-neutral-500 to-neutral-600" },
 };
 
 const legIcon: Record<string, string> = {
@@ -355,7 +361,7 @@ function WheelCard({ cycle: c }: { cycle: WheelCycle }) {
             </span>
           </div>
           <WheelStageBar status={c.status} />
-          <div className="flex gap-3 text-xs text-slate-500">
+          <div className="flex gap-3 text-xs text-neutral-500">
             <span>{c.startDate.slice(0, 10)} → {c.endDate?.slice(0, 10) ?? "present"}</span>
             <span>{c.legs.length} trades</span>
           </div>
@@ -367,8 +373,8 @@ function WheelCard({ cycle: c }: { cycle: WheelCycle }) {
           <div className={`font-bold text-sm ${isProfit ? "text-emerald-400" : "text-rose-400"}`}>
             {isProfit ? "+" : "-"}${Math.abs(net).toFixed(0)}
           </div>
-          <div className="text-xs text-slate-600">{c.status === "closed" ? "realized" : "unrealized"}</div>
-          <div className="text-slate-600 text-xs mt-1">{expanded ? "▲" : "▼"}</div>
+          <div className="text-xs text-neutral-600">{c.status === "closed" ? "realized" : "unrealized"}</div>
+          <div className="text-neutral-600 text-xs mt-1">{expanded ? "▲" : "▼"}</div>
         </div>
       </button>
 
@@ -387,7 +393,7 @@ function WheelCard({ cycle: c }: { cycle: WheelCycle }) {
                 }`}>
                   {legIcon[leg.legType] ?? leg.legType}
                 </span>
-                <span className="text-slate-400 truncate max-w-[180px]">{leg.description}</span>
+                <span className="text-neutral-400 truncate max-w-[180px]">{leg.description}</span>
               </div>
               <span className={leg.netCash >= 0 ? "text-emerald-400" : "text-rose-400"}>
                 {leg.netCash >= 0 ? "+" : ""}${leg.netCash.toFixed(0)}
@@ -422,10 +428,10 @@ function TradesTab({ trades }: { trades: IBKRTrade[] }) {
                 }`}>{t.putCall === "P" ? "PUT" : "CALL"}</span>
               )}
             </div>
-            <span className="text-xs text-slate-500 truncate">
+            <span className="text-xs text-neutral-500 truncate">
               {t.assetCategory === "OPT" ? `$${t.strike} ${t.expiry} × ${t.quantity}` : `${t.quantity} shares @ $${t.tradePrice.toFixed(2)}`}
             </span>
-            <span className="text-xs text-slate-600">{t.dateTime.slice(0, 10)}</span>
+            <span className="text-xs text-neutral-600">{t.dateTime.slice(0, 10)}</span>
           </div>
           <div className="shrink-0 text-right">
             <div className={`font-bold text-sm ${t.netCash >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
@@ -452,7 +458,7 @@ function TickerTab({ tickerPnL }: { tickerPnL: TickerPnL[] }) {
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <span className="font-bold text-white">{t.symbol}</span>
-              <span className="text-xs text-slate-500">{t.tradeCount} trades</span>
+              <span className="text-xs text-neutral-500">{t.tradeCount} trades</span>
               {t.cycleCount > 0 && (
                 <span className={`text-xs px-1.5 py-0.5 rounded-full ${
                   t.winCount / t.cycleCount >= 0.5 ? "bg-emerald-500/15 text-emerald-400" : "bg-rose-500/15 text-rose-400"
@@ -464,13 +470,13 @@ function TickerTab({ tickerPnL }: { tickerPnL: TickerPnL[] }) {
             </span>
           </div>
           {/* Progress bar showing collected premium relative to max */}
-          <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-neutral-800 rounded-full overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-cyan-500 to-emerald-500 rounded-full transition-all"
               style={{ width: `${(t.totalCollected / maxCollected) * 100}%` }}
             />
           </div>
-          <div className="flex justify-between mt-1.5 text-xs text-slate-500">
+          <div className="flex justify-between mt-1.5 text-xs text-neutral-500">
             <span>${t.totalCollected.toFixed(0)} collected</span>
             <span>${t.totalPaid.toFixed(0)} paid</span>
           </div>
@@ -489,20 +495,20 @@ const GRADIENT_COLORS: Record<string, string> = {
   sky: "from-sky-500/10 to-sky-500/5 border-sky-500/20",
   amber: "from-amber-500/10 to-amber-500/5 border-amber-500/20",
   violet: "from-violet-500/10 to-violet-500/5 border-violet-500/20",
-  slate: "from-slate-500/10 to-slate-500/5 border-slate-500/20",
+  slate: "from-neutral-500/10 to-neutral-500/5 border-neutral-500/20",
 };
 
 const TEXT_COLORS: Record<string, string> = {
   emerald: "text-emerald-400", rose: "text-rose-400", cyan: "text-cyan-400",
-  sky: "text-sky-400", amber: "text-amber-400", violet: "text-violet-400", slate: "text-slate-300",
+  sky: "text-sky-400", amber: "text-amber-400", violet: "text-violet-400", slate: "text-neutral-300",
 };
 
 function GlassCard({ label, value, sub, color = "slate" }: { label: string; value: string; sub?: string; color?: string }) {
   return (
     <div className={`rounded-xl border bg-gradient-to-br p-3.5 ${GRADIENT_COLORS[color] ?? GRADIENT_COLORS.slate}`}>
-      <p className="text-slate-400 text-xs font-medium">{label}</p>
+      <p className="text-neutral-400 text-xs font-medium">{label}</p>
       <p className={`font-bold text-lg mt-0.5 ${TEXT_COLORS[color] ?? "text-white"}`}>{value}</p>
-      {sub && <p className="text-slate-500 text-xs mt-0.5">{sub}</p>}
+      {sub && <p className="text-neutral-500 text-xs mt-0.5">{sub}</p>}
     </div>
   );
 }
@@ -510,7 +516,7 @@ function GlassCard({ label, value, sub, color = "slate" }: { label: string; valu
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="glass-card p-4">
-      <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">{title}</h3>
+      <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">{title}</h3>
       {children}
     </div>
   );
@@ -533,13 +539,13 @@ function MiniChainCard({ cycle: c }: { cycle: WheelCycle }) {
 
 function MiniStat({ label, value, color }: { label: string; value: string; color: string }) {
   return (
-    <div className="bg-slate-900/50 rounded-lg p-2">
-      <p className="text-slate-500 text-xs">{label}</p>
+    <div className="bg-neutral-900/50 rounded-lg p-2">
+      <p className="text-neutral-500 text-xs">{label}</p>
       <p className={`font-bold text-xs ${color}`}>{value}</p>
     </div>
   );
 }
 
 function EmptyState({ text }: { text: string }) {
-  return <p className="text-slate-500 text-sm text-center mt-8">{text}</p>;
+  return <p className="text-neutral-500 text-sm text-center mt-8">{text}</p>;
 }

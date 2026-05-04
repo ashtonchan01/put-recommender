@@ -18,8 +18,8 @@ export function PortfolioBuilder({ suggestion, risk, hasScanned, onScan }: Props
       <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6 text-center">
         <div className="text-5xl">📊</div>
         <div>
-          <p className="text-slate-200 font-semibold">No scan data yet</p>
-          <p className="text-slate-500 text-sm mt-1">Run a scan first, then come back here for a portfolio recommendation.</p>
+          <p className="text-white font-semibold">No scan data yet</p>
+          <p className="text-neutral-500 text-sm mt-1">Run a scan first, then come back here for a portfolio recommendation.</p>
           <button
             onClick={onScan}
             className="mt-4 px-6 py-2.5 bg-emerald-700 hover:bg-emerald-600 text-white font-medium rounded-xl text-sm transition-colors"
@@ -36,8 +36,8 @@ export function PortfolioBuilder({ suggestion, risk, hasScanned, onScan }: Props
       <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6 text-center">
         <div className="text-4xl">🔍</div>
         <div>
-          <p className="text-slate-200 font-semibold">No qualifying picks</p>
-          <p className="text-slate-500 text-sm mt-1">Try widening your filters or adding more tickers to the watchlist.</p>
+          <p className="text-white font-semibold">No qualifying picks</p>
+          <p className="text-neutral-500 text-sm mt-1">Try widening your filters or adding more tickers to the watchlist.</p>
         </div>
       </div>
     );
@@ -48,10 +48,10 @@ export function PortfolioBuilder({ suggestion, risk, hasScanned, onScan }: Props
       style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}>
 
       {/* Summary card */}
-      <div className="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 flex flex-col gap-3">
+      <div className="glass-card p-4 flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-200">Recommended Portfolio</h2>
-          <span className="text-xs text-slate-500">{picks.length} positions</span>
+          <h2 className="text-sm font-semibold text-neutral-200">Recommended Portfolio</h2>
+          <span className="text-xs text-neutral-500">{picks.length} positions</span>
         </div>
 
         <div className="grid grid-cols-3 gap-2 text-center">
@@ -77,13 +77,13 @@ export function PortfolioBuilder({ suggestion, risk, hasScanned, onScan }: Props
 
         {/* Income progress bar */}
         <div className="flex flex-col gap-1">
-          <div className="flex justify-between text-xs text-slate-500">
+          <div className="flex justify-between text-xs text-neutral-500">
             <span>vs 3% monthly target (${targetMonthlyIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })})</span>
             <span className={incomeVsTarget >= 100 ? "text-emerald-400" : "text-amber-400"}>
               {incomeVsTarget.toFixed(0)}%
             </span>
           </div>
-          <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-neutral-800 rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all ${incomeVsTarget >= 100 ? "bg-emerald-500" : "bg-amber-500"}`}
               style={{ width: `${Math.min(incomeVsTarget, 100)}%` }}
@@ -93,7 +93,7 @@ export function PortfolioBuilder({ suggestion, risk, hasScanned, onScan }: Props
       </div>
 
       {/* Picks list */}
-      <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide -mb-1">Picks (1 per ticker)</h3>
+      <h3 className="text-xs font-semibold text-neutral-500 uppercase tracking-wide -mb-1">Picks (1 per ticker)</h3>
       {picks.map((opt, i) => {
         const maxContracts = computeMaxContracts(opt.contract.strike, risk);
         const collateral = opt.contract.strike * 100 * maxContracts;
@@ -105,7 +105,7 @@ export function PortfolioBuilder({ suggestion, risk, hasScanned, onScan }: Props
 
         return (
           <div key={`${opt.symbol}-${i}`}
-            className="bg-slate-800/60 border border-slate-700/60 rounded-xl p-3.5 flex flex-col gap-2.5">
+            className="glass-card p-3.5 flex flex-col gap-2.5">
             {/* Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -113,11 +113,11 @@ export function PortfolioBuilder({ suggestion, risk, hasScanned, onScan }: Props
                 <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${typeBadge}`}>
                   {opt.contract.type.toUpperCase()}
                 </span>
-                <span className="text-slate-500 text-xs">${opt.price.toFixed(2)}</span>
+                <span className="text-neutral-500 text-xs">${opt.price.toFixed(2)}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className={`text-xs font-semibold ${signalColor}`}>{opt.signal}</span>
-                <span className="text-slate-600 text-xs">Score {opt.score}</span>
+                <span className="text-neutral-600 text-xs">Score {opt.score}</span>
               </div>
             </div>
 
@@ -130,7 +130,7 @@ export function PortfolioBuilder({ suggestion, risk, hasScanned, onScan }: Props
             </div>
 
             {/* Sizing row */}
-            <div className="grid grid-cols-3 gap-1 text-center bg-slate-900/60 rounded-lg p-2">
+            <div className="grid grid-cols-3 gap-1 text-center bg-white/[0.03] rounded-lg p-2">
               <Metric label={`Max Contracts (${risk.maxRiskPct}%)`} value={String(maxContracts)} highlight />
               <Metric label="Collateral" value={`$${collateral.toLocaleString()}`} highlight />
               <Metric label="Est. Monthly" value={`$${monthlyPremium.toFixed(0)}`} highlight />
@@ -145,9 +145,9 @@ export function PortfolioBuilder({ suggestion, risk, hasScanned, onScan }: Props
 function StatBox({ label, value, sub, color }: { label: string; value: string; sub: string; color: string }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-slate-500 text-xs">{label}</span>
+      <span className="text-neutral-500 text-xs">{label}</span>
       <span className={`font-bold text-base ${color}`}>{value}</span>
-      <span className="text-slate-600 text-xs">{sub}</span>
+      <span className="text-neutral-600 text-xs">{sub}</span>
     </div>
   );
 }
@@ -155,8 +155,8 @@ function StatBox({ label, value, sub, color }: { label: string; value: string; s
 function Metric({ label, value, highlight = false }: { label: string; value: string; highlight?: boolean }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-slate-500" style={{ fontSize: "10px" }}>{label}</span>
-      <span className={`font-semibold text-xs ${highlight ? "text-sky-300" : "text-slate-200"}`}>{value}</span>
+      <span className="text-neutral-500" style={{ fontSize: "10px" }}>{label}</span>
+      <span className={`font-semibold text-xs ${highlight ? "text-sky-300" : "text-neutral-200"}`}>{value}</span>
     </div>
   );
 }
