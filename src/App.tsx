@@ -243,21 +243,18 @@ export default function App() {
               <IBKRField label="Query ID" placeholder="Paste your Flex Query ID" value={ibkrConfig.queryId} onChange={v => setIBKRConfig(c => ({...c, queryId: v}))} />
 
               <div className="bg-slate-900/60 rounded-lg p-3 text-xs text-slate-400 flex flex-col gap-1.5 mt-1">
-                <p className="font-semibold text-slate-300">Step 1 — One-time Worker update (30 sec)</p>
-                <p>Go to <span className="text-sky-400">cloudflare.com</span> → Workers &amp; Pages → cc-yahoo-proxy → Edit Code → replace with the file <span className="text-slate-300">worker/wheel-proxy.js</span> from the repo → Save &amp; Deploy.</p>
-
-                <p className="font-semibold text-slate-300 mt-1">Step 2 — Create Flex Query in IBKR</p>
+                <p className="font-semibold text-slate-300">Step 1 — Create Flex Query in IBKR</p>
                 <p>Client Portal → Performance &amp; Reports → Flex Queries → Create</p>
                 <p>Enable these sections (Last 365 Days, XML format):</p>
                 <p className="pl-2 text-slate-300">• Trades &amp; Executions</p>
                 <p className="pl-2 text-slate-300">• Open Positions</p>
                 <p className="pl-2 text-slate-300">• Option Exercises, Assignments &amp; Expirations</p>
-                <p>Save → note the Query ID.</p>
+                <p>Save → note the <span className="text-slate-300">Query ID</span>.</p>
 
-                <p className="font-semibold text-slate-300 mt-1">Step 3 — Get Flex Token</p>
+                <p className="font-semibold text-slate-300 mt-1">Step 2 — Get Flex Token</p>
                 <p>Client Portal → Settings → Account Settings → Flex Web Service → Generate Token (set expiry to 1 year).</p>
 
-                <p className="font-semibold text-slate-300 mt-1">Step 4 — Paste above &amp; sync</p>
+                <p className="font-semibold text-slate-300 mt-1">Step 3 — Paste above &amp; hit Sync</p>
               </div>
 
               <button onClick={handleSync} disabled={syncing}
