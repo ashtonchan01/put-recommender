@@ -1,9 +1,8 @@
 import type { IBKRPosition, IBKRTrade, IBKRSyncData, IBKRConfig } from "../types";
 
-// Same Worker that serves Yahoo Finance — just add IBKR Flex routes to it.
 const WORKER_URL = import.meta.env.DEV
   ? "http://localhost:3456"
-  : (localStorage.getItem("wheel-yahoo-proxy") ?? "https://cc-yahoo-proxy.ashtonchan.workers.dev");
+  : "https://wheel-proxy.ashtonchan.workers.dev";
 
 // ── XML helpers ──────────────────────────────────────────────────────────────
 
