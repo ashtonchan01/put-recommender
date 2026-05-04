@@ -8,6 +8,7 @@ interface Props {
   syncData: IBKRSyncData | null;
   risk: RiskSettings;
   onSync: () => void;
+  onUploadXML: (e: React.ChangeEvent<HTMLInputElement>) => void;
   syncing: boolean;
   syncError: string | null;
   hasScanned: boolean;
@@ -38,7 +39,7 @@ function stageIdx(status: string): number {
   return status === "csp_open" ? 0 : status === "assigned" ? 2 : status === "cc_open" ? 3 : status === "closed" ? 5 : 0;
 }
 
-export function ActionCenter({ actions, stats, syncData, risk, onSync, syncing, syncError, hasScanned, onScan, cycles, monthlyIncome }: Props) {
+export function ActionCenter({ actions, stats, syncData, risk, onSync, onUploadXML, syncing, syncError, hasScanned, onScan, cycles, monthlyIncome }: Props) {
   const urgent      = actions.filter(a => a.urgency === "urgent");
   const manage      = actions.filter(a => a.urgency === "manage");
   const opportunity = actions.filter(a => a.urgency === "opportunity");
@@ -63,6 +64,10 @@ export function ActionCenter({ actions, stats, syncData, risk, onSync, syncing, 
           className="flex-1 py-2.5 bg-white/10 hover:bg-white/15 disabled:opacity-40 text-white font-medium rounded-xl text-sm transition-all">
           {syncing ? "Syncing with IBKR…" : "Sync Portfolio"}
         </button>
+        <label className="px-4 py-2.5 bg-white/10 hover:bg-white/15 text-white text-sm font-medium rounded-xl transition-all cursor-pointer">
+          Upload
+          <input type="file" accept=".xml" onChange={onUploadXML} className="hidden" />
+        </label>
         {!hasScanned && (
           <button onClick={onScan}
             className="px-4 py-2.5 bg-lime-500/15 hover:bg-lime-500/25 text-lime-400 text-sm font-medium rounded-xl transition-all border border-lime-500/20">

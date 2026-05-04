@@ -6,7 +6,7 @@ import { useOptionsData } from "./hooks/useOptionsData";
 import { buildPortfolio } from "./engine/portfolio";
 import { buildWheelCycles, buildMonthlyIncome, buildTickerPnL } from "./engine/wheels";
 import { generateActions } from "./engine/recommendations";
-import { syncFromIBKR, saveSyncData, loadSyncData, computeStats } from "./services/ibkr";
+import { syncFromIBKR, syncFromXML, saveSyncData, loadSyncData, computeStats } from "./services/ibkr";
 import { OptionCard } from "./components/OptionCard";
 import { FilterBar } from "./components/FilterBar";
 import { TickerSelector } from "./components/TickerSelector";
@@ -102,6 +102,24 @@ export default function App() {
       setSyncing(false);
     }
   }, [ibkrConfig]);
+
+  const handleXMLUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSyncError(null);
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = syncFromXML(reader.result as string);
+        saveSyncData(data);
+        setSyncData(data);
+      } catch (err) {
+        setSyncError(err instanceof Error ? err.message : "Failed to parse XML");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = ""; // reset so same file can be re-uploaded
+  }, []);
 
   // Derived data
   const positions = syncData?.positions ?? [];
@@ -286,7 +304,7 @@ export default function App() {
           {appView === "actions" && (
             <ActionCenter
               actions={actions} stats={stats} syncData={syncData} risk={risk}
-              onSync={handleSync} syncing={syncing} syncError={syncError}
+              onSync={handleSync} onUploadXML={handleXMLUpload} syncing={syncing} syncError={syncError}
               hasScanned={hasScanned} onScan={() => { setAppView("scan"); scan(); }}
               cycles={cycles} monthlyIncome={monthly}
             />
@@ -383,12 +401,18 @@ export default function App() {
                     <p className="font-semibold text-neutral-300 mt-1">Step 3 — Paste above &amp; hit Sync</p>
                   </div>
 
-                  <button onClick={handleSync} disabled={syncing}
-                    className="w-full py-2.5 bg-white/10 hover:bg-white/15 disabled:opacity-40 text-white font-medium rounded-xl text-sm transition-all">
-                    {syncing ? "Syncing…" : "Test Sync"}
-                  </button>
+                  <div className="flex gap-2">
+                    <button onClick={handleSync} disabled={syncing}
+                      className="flex-1 py-2.5 bg-white/10 hover:bg-white/15 disabled:opacity-40 text-white font-medium rounded-xl text-sm transition-all">
+                      {syncing ? "Syncing…" : "API Sync"}
+                    </button>
+                    <label className="flex-1 py-2.5 bg-white/10 hover:bg-white/15 text-white font-medium rounded-xl text-sm transition-all text-center cursor-pointer">
+                      Upload XML
+                      <input type="file" accept=".xml" onChange={handleXMLUpload} className="hidden" />
+                    </label>
+                  </div>
                   {syncError && <p className="text-rose-400 text-xs">{syncError}</p>}
-                  {syncData && <p className="text-emerald-400 text-xs">Last sync: {new Date(syncData.lastSync).toLocaleString()}</p>}
+                  {syncData && <p className="text-emerald-400 text-xs">Last sync: {new Date(syncData.lastSync).toLocaleString()} · {syncData.positions.length} positions · {syncData.trades.length} trades</p>}
                 </div>
               </section>
 

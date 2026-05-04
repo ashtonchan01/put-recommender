@@ -159,6 +159,18 @@ export async function syncFromIBKR(config: IBKRConfig): Promise<IBKRSyncData> {
   };
 }
 
+export function syncFromXML(xml: string): IBKRSyncData {
+  const { positions, trades } = parseFlexXML(xml);
+  if (positions.length === 0 && trades.length === 0) {
+    throw new Error("No positions or trades found in XML — check the file format");
+  }
+  return {
+    positions,
+    trades,
+    lastSync: new Date().toISOString(),
+  };
+}
+
 // ── LocalStorage cache ───────────────────────────────────────────────────────
 
 const SYNC_KEY = "ibkr-sync-data";
