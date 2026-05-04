@@ -1,4 +1,4 @@
-import type { IBKRTrade, WheelCycle, WheelLeg, WheelStatus } from "../types";
+import type { IBKRTrade, WheelCycle, WheelLeg } from "../types";
 
 // ── Build wheel cycles from trade history ────────────────────────────────────
 //
