@@ -1,5 +1,10 @@
 import type { IBKRPosition, IBKRTrade, IBKRSyncData, IBKRConfig } from "../types";
 
+// Same Worker that serves Yahoo Finance — just add IBKR Flex routes to it.
+const WORKER_URL = import.meta.env.DEV
+  ? "http://localhost:3456"
+  : (localStorage.getItem("wheel-yahoo-proxy") ?? "https://cc-yahoo-proxy.ashtonchan.workers.dev");
+
 // ── XML helpers ──────────────────────────────────────────────────────────────
 
 function parseFlexXML(xml: string): { positions: IBKRPosition[]; trades: IBKRTrade[] } {
@@ -105,13 +110,11 @@ function delay(ms: number) {
 // ── Public API ───────────────────────────────────────────────────────────────
 
 export async function syncFromIBKR(config: IBKRConfig): Promise<IBKRSyncData> {
-  const proxyBase = config.proxyUrl || (import.meta.env.DEV ? "http://localhost:3456" : "");
-  if (!proxyBase) throw new Error("No proxy URL configured. Start the local proxy: npm run proxy");
-  if (!config.token) throw new Error("No Flex token configured");
-  if (!config.queryId) throw new Error("No Query ID configured");
+  if (!config.token)   throw new Error("No Flex token — add it in Settings → IBKR");
+  if (!config.queryId) throw new Error("No Query ID — add it in Settings → IBKR");
 
-  const refCode = await flexRequest(proxyBase, config.token, config.queryId);
-  const xml = await flexStatement(proxyBase, refCode);
+  const refCode = await flexRequest(WORKER_URL, config.token, config.queryId);
+  const xml = await flexStatement(WORKER_URL, refCode);
   const { positions, trades } = parseFlexXML(xml);
 
   return {

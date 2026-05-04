@@ -34,7 +34,7 @@ function loadRisk(): RiskSettings {
 }
 function loadIBKRConfig(): IBKRConfig {
   try { const s = localStorage.getItem(IBKR_CONFIG_KEY); if (s) return JSON.parse(s); } catch { /* */ }
-  return { token: "", queryId: "", proxyUrl: "" };
+  return { token: "", queryId: "" };
 }
 
 export default function App() {
@@ -239,20 +239,25 @@ export default function App() {
           <section>
             <h2 className="text-sm font-semibold text-slate-300 mb-3">IBKR Connection</h2>
             <div className="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 flex flex-col gap-3">
-              <IBKRField label="Flex Token" placeholder="30-day token from IBKR → Settings → Flex Web Service" value={ibkrConfig.token} onChange={v => setIBKRConfig(c => ({...c, token: v}))} />
-              <IBKRField label="Query ID" placeholder="ID of your Activity Flex Query" value={ibkrConfig.queryId} onChange={v => setIBKRConfig(c => ({...c, queryId: v}))} />
-              <IBKRField label="Proxy URL" placeholder="http://localhost:3456  (run: npm run proxy)" value={ibkrConfig.proxyUrl} onChange={v => setIBKRConfig(c => ({...c, proxyUrl: v}))} />
+              <IBKRField label="Flex Token" placeholder="Paste your IBKR Flex token" value={ibkrConfig.token} onChange={v => setIBKRConfig(c => ({...c, token: v}))} secret />
+              <IBKRField label="Query ID" placeholder="Paste your Flex Query ID" value={ibkrConfig.queryId} onChange={v => setIBKRConfig(c => ({...c, queryId: v}))} />
 
               <div className="bg-slate-900/60 rounded-lg p-3 text-xs text-slate-400 flex flex-col gap-1.5 mt-1">
-                <p className="font-semibold text-slate-300">Setting up your new Flex Query</p>
-                <p>1. IBKR Client Portal → Reports → Flex Queries → Create Activity Flex Query</p>
-                <p>2. Name it "Wheel Tracker". Sections to enable:</p>
-                <p className="pl-2 text-slate-300 font-medium">• Open Positions (all fields)</p>
-                <p className="pl-2 text-slate-300 font-medium">• Trades (all fields, date range: Last 365 days)</p>
-                <p>3. Format: XML. Save and note the Query ID.</p>
-                <p>4. Client Portal → Settings → Account Settings → Flex Web Service → Generate Token</p>
-                <p>5. Start local proxy: <code className="bg-slate-800 px-1 rounded">npm run proxy</code></p>
-                <p>6. Set Proxy URL to <code className="bg-slate-800 px-1 rounded">http://localhost:3456</code></p>
+                <p className="font-semibold text-slate-300">Step 1 — One-time Worker update (30 sec)</p>
+                <p>Go to <span className="text-sky-400">cloudflare.com</span> → Workers &amp; Pages → cc-yahoo-proxy → Edit Code → replace with the file <span className="text-slate-300">worker/wheel-proxy.js</span> from the repo → Save &amp; Deploy.</p>
+
+                <p className="font-semibold text-slate-300 mt-1">Step 2 — Create Flex Query in IBKR</p>
+                <p>Client Portal → Performance &amp; Reports → Flex Queries → Create</p>
+                <p>Enable these sections (Last 365 Days, XML format):</p>
+                <p className="pl-2 text-slate-300">• Trades &amp; Executions</p>
+                <p className="pl-2 text-slate-300">• Open Positions</p>
+                <p className="pl-2 text-slate-300">• Option Exercises, Assignments &amp; Expirations</p>
+                <p>Save → note the Query ID.</p>
+
+                <p className="font-semibold text-slate-300 mt-1">Step 3 — Get Flex Token</p>
+                <p>Client Portal → Settings → Account Settings → Flex Web Service → Generate Token (set expiry to 1 year).</p>
+
+                <p className="font-semibold text-slate-300 mt-1">Step 4 — Paste above &amp; sync</p>
               </div>
 
               <button onClick={handleSync} disabled={syncing}
@@ -331,11 +336,11 @@ export default function App() {
   );
 }
 
-function IBKRField({ label, placeholder, value, onChange }: { label: string; placeholder: string; value: string; onChange: (v: string) => void }) {
+function IBKRField({ label, placeholder, value, onChange, secret }: { label: string; placeholder: string; value: string; onChange: (v: string) => void; secret?: boolean }) {
   return (
     <div className="flex flex-col gap-1">
       <label className="text-xs text-slate-400">{label}</label>
-      <input type="text" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+      <input type={secret ? "password" : "text"} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
         className="bg-slate-900/60 border border-slate-600 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-sky-500" />
     </div>
   );

@@ -87,7 +87,6 @@ export interface PortfolioSuggestion {
 export interface IBKRConfig {
   token: string;
   queryId: string;
-  proxyUrl: string;
 }
 
 // ── IBKR Position (from Flex OpenPosition) ──────────────────────────────────
