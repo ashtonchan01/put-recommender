@@ -239,7 +239,7 @@ export default function App() {
           <section>
             <h2 className="text-sm font-semibold text-slate-300 mb-3">IBKR Connection</h2>
             <div className="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 flex flex-col gap-3">
-              <IBKRField label="Flex Token" placeholder="Paste your IBKR Flex token" value={ibkrConfig.token} onChange={v => setIBKRConfig(c => ({...c, token: v}))} secret />
+              <IBKRField label="Flex Token" placeholder="Paste your IBKR Flex token" value={ibkrConfig.token} onChange={v => setIBKRConfig(c => ({...c, token: v}))} />
               <IBKRField label="Query ID" placeholder="Paste your Flex Query ID" value={ibkrConfig.queryId} onChange={v => setIBKRConfig(c => ({...c, queryId: v}))} />
 
               <div className="bg-slate-900/60 rounded-lg p-3 text-xs text-slate-400 flex flex-col gap-1.5 mt-1">
