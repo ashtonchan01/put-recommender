@@ -2,7 +2,7 @@ import type { StockQuote, OptionContract, IVData, EarningsInfo } from "../types"
 
 const YAHOO_PROXY = import.meta.env.DEV
   ? "/yahoo-api"
-  : (localStorage.getItem("wheel-yahoo-proxy") ?? "https://cc-yahoo-proxy.ashtonchan.workers.dev");
+  : "https://wheel-proxy.ashtonchan.workers.dev";
 
 async function fetchYahoo(path: string, retries = 2): Promise<unknown> {
   const url = `${YAHOO_PROXY}${path}`;
