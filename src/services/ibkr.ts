@@ -10,12 +10,22 @@ function parseFlexXML(xml: string): { positions: IBKRPosition[]; trades: IBKRTra
   const parser = new DOMParser();
   const doc = parser.parseFromString(xml, "text/xml");
 
+  // Use underlyingSymbol for options (clean ticker), fall back to symbol
+  const getSymbol = (el: Element): string => {
+    const asset = el.getAttribute("assetCategory") ?? "";
+    if (asset === "OPT") {
+      const underlying = el.getAttribute("underlyingSymbol") ?? "";
+      if (underlying) return underlying;
+    }
+    return el.getAttribute("symbol") ?? "";
+  };
+
   const positions: IBKRPosition[] = [];
   doc.querySelectorAll("OpenPosition").forEach((el) => {
     const qty = parseFloat(el.getAttribute("position") ?? "0");
     if (qty === 0) return;
     positions.push({
-      symbol: el.getAttribute("symbol") ?? "",
+      symbol: getSymbol(el),
       description: el.getAttribute("description") ?? "",
       assetCategory: (el.getAttribute("assetCategory") ?? "") as IBKRPosition["assetCategory"],
       quantity: qty,
@@ -40,7 +50,7 @@ function parseFlexXML(xml: string): { positions: IBKRPosition[]; trades: IBKRTra
     trades.push({
       id: el.getAttribute("transactionID") ?? `${rawDateTime}-${Math.random()}`,
       dateTime: isoDateTime,
-      symbol: el.getAttribute("symbol") ?? "",
+      symbol: getSymbol(el),
       description: el.getAttribute("description") ?? "",
       assetCategory: (el.getAttribute("assetCategory") ?? "") as IBKRTrade["assetCategory"],
       putCall: (el.getAttribute("putCall") || undefined) as "P" | "C" | undefined,
@@ -75,37 +85,55 @@ function parseIBKRDateTime(raw: string): string {
 
 // ── Flex API calls ───────────────────────────────────────────────────────────
 
+const RETRY_PATTERNS = [
+  "Please re-try",
+  "retry",
+  "could not be generated",
+  "could not be retrieved",
+  "try again",
+  "Statement generation in progress",
+  "please try again",
+  "1019",  // IBKR: statement is being prepared
+  "1021",  // IBKR: statement could not be retrieved
+];
+
+function isRetryableResponse(text: string): boolean {
+  return RETRY_PATTERNS.some(p => text.includes(p));
+}
+
 async function flexRequest(proxyBase: string, token: string, queryId: string): Promise<string> {
-  const res = await fetch(
-    `${proxyBase}/ibkr-flex/request?t=${encodeURIComponent(token)}&q=${encodeURIComponent(queryId)}`
-  );
-  const data = await res.json() as { referenceCode?: string; error?: string };
-  if (data.error) throw new Error(data.error);
-  if (!data.referenceCode) throw new Error("No reference code returned from IBKR");
-  return data.referenceCode;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const res = await fetch(
+      `${proxyBase}/ibkr-flex/request?t=${encodeURIComponent(token)}&q=${encodeURIComponent(queryId)}`
+    );
+    const data = await res.json() as { referenceCode?: string; error?: string; code?: string };
+    if (data.referenceCode) return data.referenceCode;
+    // Retry on transient IBKR errors (1019, 1021, etc.)
+    if (data.error && isRetryableResponse(data.error + (data.code ?? ""))) {
+      await delay(5000);
+      continue;
+    }
+    if (data.error) throw new Error(data.error);
+    throw new Error("No reference code returned from IBKR");
+  }
+  throw new Error("IBKR did not return a reference code after retries — try again shortly");
 }
 
 async function flexStatement(proxyBase: string, refCode: string): Promise<string> {
-  // IBKR takes 1–10 seconds to prepare the report
+  // IBKR takes 5–30 seconds to prepare the report
   await delay(5000);
-  for (let attempt = 0; attempt < 5; attempt++) {
+  for (let attempt = 0; attempt < 8; attempt++) {
     const res = await fetch(`${proxyBase}/ibkr-flex/statement?q=${encodeURIComponent(refCode)}`);
     const text = await res.text();
     // IBKR returns various "not ready" messages — retry on any of them
-    if (
-      text.includes("Please re-try") ||
-      text.includes("retry") ||
-      text.includes("could not be generated") ||
-      text.includes("try again") ||
-      text.includes("Statement generation in progress")
-    ) {
+    if (isRetryableResponse(text)) {
       await delay(5000);
       continue;
     }
     if (!res.ok) throw new Error(`Statement fetch failed: ${res.status}`);
     return text;
   }
-  throw new Error("IBKR report timed out — try again in a moment");
+  throw new Error("IBKR report timed out after 45s — try again in a moment");
 }
 
 function delay(ms: number) {
