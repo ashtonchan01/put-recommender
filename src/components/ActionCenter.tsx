@@ -56,7 +56,7 @@ export function ActionCenter({ actions, stats, syncData, risk, onSync, onUploadX
   const thisMonth = monthlyIncome.find(m => m.month === `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`);
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-4 flex flex-col gap-4 max-w-4xl">
+    <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-4 flex flex-col gap-4 max-w-4xl w-full">
 
       {/* Sync bar */}
       <div className="flex items-center gap-2">

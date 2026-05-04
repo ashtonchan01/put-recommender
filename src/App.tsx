@@ -299,7 +299,7 @@ export default function App() {
         </header>
 
         {/* ── Page content ───────────────────────────────────────────── */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto flex justify-center">
 
           {appView === "actions" && (
             <ActionCenter
@@ -380,7 +380,7 @@ export default function App() {
           )}
 
           {appView === "settings" && (
-            <div className="px-4 lg:px-6 py-5 flex flex-col gap-5 max-w-2xl">
+            <div className="px-4 lg:px-6 py-5 flex flex-col gap-5 max-w-2xl w-full">
 
               <section>
                 <h2 className="text-sm font-semibold text-neutral-300 mb-3">IBKR Connection</h2>

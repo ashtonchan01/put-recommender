@@ -72,7 +72,7 @@ export function JournalView({ cycles, trades, monthlyIncome, tickerPnL, hasData,
         ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-4 flex flex-col gap-4 max-w-4xl">
+      <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-4 flex flex-col gap-4 max-w-4xl w-full">
         {tab === "profit"   && <ProfitTab stats={perfStats} monthly={monthlyIncome} dailyPnL={dailyPnL} cumulativePnL={cumulativePnL} cycles={cycles} />}
         {tab === "calendar" && <CalendarTab months={calendarData} />}
         {tab === "wheels"   && <WheelsTab cycles={cycles} />}
