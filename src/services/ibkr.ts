@@ -102,21 +102,23 @@ function isRetryableResponse(text: string): boolean {
 }
 
 async function flexRequest(proxyBase: string, token: string, queryId: string): Promise<string> {
-  for (let attempt = 0; attempt < 3; attempt++) {
+  let lastError = "";
+  for (let attempt = 0; attempt < 5; attempt++) {
     const res = await fetch(
       `${proxyBase}/ibkr-flex/request?t=${encodeURIComponent(token)}&q=${encodeURIComponent(queryId)}`
     );
-    const data = await res.json() as { referenceCode?: string; error?: string; code?: string };
+    const data = await res.json() as { referenceCode?: string; error?: string; code?: string; raw?: string };
     if (data.referenceCode) return data.referenceCode;
+    lastError = data.error ?? data.raw ?? "Unknown error";
     // Retry on transient IBKR errors (1019, 1021, etc.)
     if (data.error && isRetryableResponse(data.error + (data.code ?? ""))) {
-      await delay(5000);
+      await delay(8000);
       continue;
     }
-    if (data.error) throw new Error(data.error);
+    if (data.error) throw new Error(`IBKR: ${data.error}`);
     throw new Error("No reference code returned from IBKR");
   }
-  throw new Error("IBKR did not return a reference code after retries — try again shortly");
+  throw new Error(`IBKR not responding after 5 attempts: ${lastError.slice(0, 100)}`);
 }
 
 async function flexStatement(proxyBase: string, refCode: string): Promise<string> {
