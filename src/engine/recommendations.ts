@@ -1,4 +1,5 @@
 import type { IBKRPosition, Action, ActionType, ActionUrgency, ScoredOption, RiskSettings } from "../types";
+import { getActionablePositions } from "./classifier";
 
 const TODAY = new Date();
 
@@ -12,6 +13,11 @@ function fmt(n: number, prefix = "$"): string {
 }
 
 // ── Core recommendation engine ───────────────────────────────────────────────
+//
+// Only generates actions for:
+//   - Cash-Secured Puts (CSPs)
+//   - Covered Calls (CCs)
+// Other strategies (risk reversals, spreads, LEAPs) are left untouched.
 //
 // Priority order:
 //   1. URGENT  — positions at ≥ 50% max loss (roll or take loss)
@@ -27,10 +33,14 @@ export function generateActions(
   risk: RiskSettings
 ): Action[] {
   const actions: Action[] = [];
-  const shortOpts = positions.filter(p => p.assetCategory === "OPT" && p.quantity < 0);
+
+  // Only process CSPs and Covered Calls — leave spreads/reversals/LEAPs alone
+  const actionableOpts = getActionablePositions(positions);
+  const shortOpts = actionableOpts.filter(p => p.assetCategory === "OPT" && p.quantity < 0);
+
   const longStocks = positions.filter(p => p.assetCategory === "STK" && p.quantity > 0);
   const openCallSymbols = new Set(
-    positions.filter(p => p.assetCategory === "OPT" && p.quantity < 0 && p.putCall === "C").map(p => p.symbol)
+    actionableOpts.filter(p => p.putCall === "C").map(p => p.symbol)
   );
 
   for (const pos of shortOpts) {

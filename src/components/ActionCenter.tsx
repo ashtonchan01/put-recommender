@@ -1,6 +1,7 @@
 import type { Action, ActionUrgency, IBKRSyncData, RiskSettings, WheelCycle } from "../types";
 import type { PortfolioStats } from "../services/ibkr";
 import type { MonthlyIncome } from "../engine/wheels";
+import type { StrategyGroup } from "../engine/classifier";
 
 interface Props {
   actions: Action[];
@@ -15,6 +16,7 @@ interface Props {
   onScan: () => void;
   cycles: WheelCycle[];
   monthlyIncome: MonthlyIncome[];
+  strategyGroups: StrategyGroup[];
 }
 
 const urgencyConfig: Record<ActionUrgency, { label: string; dot: string; border: string; bg: string }> = {
@@ -39,7 +41,7 @@ function stageIdx(status: string): number {
   return status === "csp_open" ? 0 : status === "assigned" ? 2 : status === "cc_open" ? 3 : status === "closed" ? 5 : 0;
 }
 
-export function ActionCenter({ actions, stats, syncData, risk, onSync, onUploadXML, syncing, syncError, hasScanned, onScan, cycles, monthlyIncome }: Props) {
+export function ActionCenter({ actions, stats, syncData, risk, onSync, onUploadXML, syncing, syncError, hasScanned, onScan, cycles, monthlyIncome, strategyGroups }: Props) {
   const urgent      = actions.filter(a => a.urgency === "urgent");
   const manage      = actions.filter(a => a.urgency === "manage");
   const opportunity = actions.filter(a => a.urgency === "opportunity");
@@ -192,6 +194,16 @@ export function ActionCenter({ actions, stats, syncData, risk, onSync, onUploadX
       {manage.length > 0 && <ActionGroup label="MANAGE — Review positions" urgency="manage" actions={manage} />}
       {opportunity.length > 0 && <ActionGroup label="OPPORTUNITIES" urgency="opportunity" actions={opportunity} />}
 
+      {/* Strategy groups */}
+      {strategyGroups.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Portfolio by Strategy</h3>
+          {strategyGroups.map(g => (
+            <StrategyCard key={g.type} group={g} />
+          ))}
+        </div>
+      )}
+
       {/* Rules */}
       {(syncData || hasScanned) && (
         <div className="glass-card p-4 flex flex-col gap-2">
@@ -290,6 +302,69 @@ function MiniMetric({ label, value }: { label: string; value: string }) {
     <div className="flex flex-col gap-0.5">
       <span className="text-neutral-500" style={{ fontSize: "10px" }}>{label}</span>
       <span className="text-neutral-200 text-xs font-medium">{value}</span>
+    </div>
+  );
+}
+
+const STRATEGY_COLORS: Record<string, { dot: string; border: string; bg: string }> = {
+  csp:            { dot: "bg-rose-400",    border: "border-rose-500/20",    bg: "from-rose-500/10 to-rose-500/5" },
+  covered_call:   { dot: "bg-violet-400",  border: "border-violet-500/20",  bg: "from-violet-500/10 to-violet-500/5" },
+  risk_reversal:  { dot: "bg-cyan-400",    border: "border-cyan-500/20",    bg: "from-cyan-500/10 to-cyan-500/5" },
+  synthetic_long: { dot: "bg-sky-400",     border: "border-sky-500/20",     bg: "from-sky-500/10 to-sky-500/5" },
+  put_spread:     { dot: "bg-amber-400",   border: "border-amber-500/20",   bg: "from-amber-500/10 to-amber-500/5" },
+  call_spread:    { dot: "bg-lime-400",    border: "border-lime-500/20",    bg: "from-lime-500/10 to-lime-500/5" },
+  leap:           { dot: "bg-emerald-400", border: "border-emerald-500/20", bg: "from-emerald-500/10 to-emerald-500/5" },
+  other:          { dot: "bg-neutral-500", border: "border-neutral-500/20", bg: "from-neutral-500/10 to-neutral-500/5" },
+};
+
+function StrategyCard({ group }: { group: StrategyGroup }) {
+  const cfg = STRATEGY_COLORS[group.type] ?? STRATEGY_COLORS.other;
+  const totalPnL = group.positions.reduce((s, p) => s + p.position.unrealizedPnL, 0);
+  const totalValue = group.positions.reduce((s, p) => s + Math.abs(p.position.currentValue), 0);
+
+  // Deduplicate — spreads/reversals list both legs, only show unique positions
+  const seen = new Set<string>();
+  const uniquePositions = group.positions.filter(p => {
+    const key = `${p.position.symbol}-${p.position.putCall}-${p.position.strike}-${p.position.expiry}-${p.position.quantity}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  return (
+    <div className={`rounded-xl border bg-gradient-to-br p-4 ${cfg.border} ${cfg.bg}`}>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <div className={`w-2 h-2 rounded-full ${cfg.dot}`} />
+          <span className="text-sm font-semibold text-white">{group.label}</span>
+          <span className="text-xs text-neutral-500">{uniquePositions.length}</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-neutral-500">{fmtK(totalValue)}</span>
+          <span className={`text-xs font-bold ${totalPnL >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+            {totalPnL >= 0 ? "+" : ""}{fmt(totalPnL)}
+          </span>
+        </div>
+      </div>
+      <div className="flex flex-col gap-1">
+        {uniquePositions.slice(0, 6).map((cp, i) => {
+          const p = cp.position;
+          const label = p.assetCategory === "OPT"
+            ? `${p.symbol} ${p.strike} ${p.putCall} ${p.expiry?.slice(0, 10) ?? ""}`
+            : `${p.symbol} × ${p.quantity}`;
+          return (
+            <div key={i} className="flex items-center justify-between text-xs">
+              <span className="text-neutral-300">{p.quantity < 0 ? "Short" : "Long"} {label}</span>
+              <span className={p.unrealizedPnL >= 0 ? "text-emerald-400" : "text-rose-400"}>
+                {p.unrealizedPnL >= 0 ? "+" : ""}${Math.abs(p.unrealizedPnL).toFixed(0)}
+              </span>
+            </div>
+          );
+        })}
+        {uniquePositions.length > 6 && (
+          <p className="text-xs text-neutral-600">+{uniquePositions.length - 6} more</p>
+        )}
+      </div>
     </div>
   );
 }

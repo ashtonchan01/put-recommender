@@ -6,6 +6,7 @@ import { useOptionsData } from "./hooks/useOptionsData";
 import { buildPortfolio } from "./engine/portfolio";
 import { buildWheelCycles, buildMonthlyIncome, buildTickerPnL } from "./engine/wheels";
 import { generateActions } from "./engine/recommendations";
+import { classifyPositions } from "./engine/classifier";
 import { syncFromIBKR, syncFromXML, saveSyncData, loadSyncData, computeStats } from "./services/ibkr";
 import { OptionCard } from "./components/OptionCard";
 import { FilterBar } from "./components/FilterBar";
@@ -125,12 +126,13 @@ export default function App() {
   const positions = syncData?.positions ?? [];
   const trades    = syncData?.trades ?? [];
 
-  const cycles       = useMemo(() => buildWheelCycles(trades), [trades]);
-  const monthly      = useMemo(() => buildMonthlyIncome(trades), [trades]);
-  const tickerPnL    = useMemo(() => buildTickerPnL(cycles), [cycles]);
-  const stats        = useMemo(() => syncData ? computeStats(positions, trades) : null, [positions, trades, syncData]);
-  const actions      = useMemo(() => generateActions(positions, allPuts, allCalls, risk), [positions, allPuts, allCalls, risk]);
-  const portfolio    = useMemo(() => buildPortfolio(allPuts, allCalls, risk), [allPuts, allCalls, risk]);
+  const cycles         = useMemo(() => buildWheelCycles(trades), [trades]);
+  const monthly        = useMemo(() => buildMonthlyIncome(trades), [trades]);
+  const tickerPnL      = useMemo(() => buildTickerPnL(cycles), [cycles]);
+  const stats          = useMemo(() => syncData ? computeStats(positions, trades) : null, [positions, trades, syncData]);
+  const strategyGroups = useMemo(() => classifyPositions(positions), [positions]);
+  const actions        = useMemo(() => generateActions(positions, allPuts, allCalls, risk), [positions, allPuts, allCalls, risk]);
+  const portfolio      = useMemo(() => buildPortfolio(allPuts, allCalls, risk), [allPuts, allCalls, risk]);
 
   // Scan view helpers
   const activeOptions = optionType === "puts" ? allPuts : optionType === "calls" ? allCalls : [...allPuts, ...allCalls].sort((a, b) => b.score - a.score);
@@ -306,7 +308,7 @@ export default function App() {
               actions={actions} stats={stats} syncData={syncData} risk={risk}
               onSync={handleSync} onUploadXML={handleXMLUpload} syncing={syncing} syncError={syncError}
               hasScanned={hasScanned} onScan={() => { setAppView("scan"); scan(); }}
-              cycles={cycles} monthlyIncome={monthly}
+              cycles={cycles} monthlyIncome={monthly} strategyGroups={strategyGroups}
             />
           )}
 
